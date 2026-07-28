@@ -13,8 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://avalon-app-gray.vercel.app"),
   title: "아발론 도우미",
   description: "아발론 보드게임 진행을 도와주는 앱",
+  openGraph: {
+    title: "아발론 도우미",
+    description: "아발론 보드게임 진행을 도와주는 앱",
+    images: [{ url: "/og_image.png", width: 1536, height: 1024 }],
+  },
 };
 
 export default function RootLayout({
