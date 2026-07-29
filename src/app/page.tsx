@@ -7,7 +7,7 @@ import { saveSession } from "@/lib/session";
 
 export default function HomePage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"create" | "join">("create");
+  const [mode, setMode] = useState<"create" | "join">("join");
   const [nickname, setNickname] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
