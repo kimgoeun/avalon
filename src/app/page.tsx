@@ -53,7 +53,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-700 overflow-hidden">
+        <div className="flex rounded-xl border border-neutral-300 dark:border-neutral-700 overflow-hidden">
           <button
             className={`flex-1 py-3 text-base font-medium transition ${
               mode === "join"
@@ -82,7 +82,7 @@ export default function HomePage() {
           <div className="space-y-1">
             <label className="text-base font-medium">닉네임</label>
             <input
-              className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-400"
+              className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-400"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               placeholder="예: 김철수"
@@ -94,7 +94,7 @@ export default function HomePage() {
             <div className="space-y-1">
               <label className="text-base font-medium">방 코드</label>
               <input
-                className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent px-4 py-3 uppercase tracking-widest outline-none focus:ring-2 focus:ring-neutral-400"
+                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-4 py-3 uppercase tracking-widest outline-none focus:ring-2 focus:ring-neutral-400"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="예: A1B2"
@@ -108,7 +108,7 @@ export default function HomePage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
+            className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
           >
             {loading ? "처리 중..." : mode === "create" ? "방 만들기" : "참가하기"}
           </button>

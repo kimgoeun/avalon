@@ -71,14 +71,14 @@ export default function QuestPlay({
               <button
                 disabled={submitting}
                 onClick={() => submit(true)}
-                className="rounded-md bg-blue-600 text-white py-4 font-medium disabled:opacity-50"
+                className="rounded-lg bg-blue-600 text-white py-4 font-medium disabled:opacity-50"
               >
                 성공 카드
               </button>
               <button
                 disabled={submitting}
                 onClick={() => submit(false)}
-                className="rounded-md bg-red-600 text-white py-4 font-medium disabled:opacity-50"
+                className="rounded-lg bg-red-600 text-white py-4 font-medium disabled:opacity-50"
               >
                 실패 카드
               </button>
@@ -87,7 +87,7 @@ export default function QuestPlay({
             <button
               disabled={submitting}
               onClick={() => submit(true)}
-              className="w-full rounded-md bg-blue-600 text-white py-4 font-medium disabled:opacity-50"
+              className="w-full rounded-lg bg-blue-600 text-white py-4 font-medium disabled:opacity-50"
             >
               성공 카드 제출하기
             </button>
@@ -99,7 +99,7 @@ export default function QuestPlay({
         )
       ) : (
         <div
-          className={`text-center space-y-4 rounded-xl border-2 p-5 ${
+          className={`text-center space-y-4 rounded-2xl border-2 p-5 ${
             questFailed
               ? "border-red-500 bg-red-50 dark:bg-red-950/30"
               : "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
@@ -110,11 +110,11 @@ export default function QuestPlay({
           </p>
 
           <div className="flex items-center justify-center gap-3">
-            <div className="flex flex-col items-center gap-1 rounded-lg bg-white dark:bg-neutral-900 px-6 py-4 shadow-sm">
+            <div className="flex flex-col items-center gap-1 rounded-xl bg-white dark:bg-neutral-900 px-6 py-4 shadow-sm">
               <span className="text-4xl font-bold text-blue-600">{successCount}</span>
               <span className="text-sm font-medium text-neutral-500">성공 카드</span>
             </div>
-            <div className="flex flex-col items-center gap-1 rounded-lg bg-white dark:bg-neutral-900 px-6 py-4 shadow-sm">
+            <div className="flex flex-col items-center gap-1 rounded-xl bg-white dark:bg-neutral-900 px-6 py-4 shadow-sm">
               <span className="text-4xl font-bold text-red-600">{failCount}</span>
               <span className="text-sm font-medium text-neutral-500">실패 카드</span>
             </div>
@@ -124,7 +124,7 @@ export default function QuestPlay({
             <button
               disabled={advancing}
               onClick={handleNext}
-              className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
+              className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
             >
               {advancing ? "진행하는 중..." : "다음"}
             </button>

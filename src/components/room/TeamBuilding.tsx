@@ -64,7 +64,7 @@ export default function TeamBuilding({
               <button
                 disabled={!isLeader}
                 onClick={() => toggle(p.id)}
-                className={`w-full flex items-center justify-between rounded-md border px-4 py-3 text-base transition ${
+                className={`w-full flex items-center justify-between rounded-lg border px-4 py-3 text-base transition ${
                   isSelected
                     ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30"
                     : "border-neutral-200 dark:border-neutral-800"
@@ -82,7 +82,7 @@ export default function TeamBuilding({
         <button
           disabled={selected.length !== quest.team_size || submitting}
           onClick={submit}
-          className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
+          className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
         >
           {submitting ? "제출 중..." : `원정대 제안하기 (${selected.length}/${quest.team_size})`}
         </button>

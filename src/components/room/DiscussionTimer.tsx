@@ -67,7 +67,7 @@ export default function DiscussionTimer({ room, isHost }: { room: Room; isHost: 
 
   return (
     <div
-      className={`flex flex-col items-center gap-2 rounded-lg border p-3 transition-colors ${
+      className={`flex flex-col items-center gap-2 rounded-xl border p-3 transition-colors ${
         isDone
           ? "border-red-600 bg-red-600 text-white animate-pulse"
           : "border-neutral-200 dark:border-neutral-800"
@@ -84,7 +84,7 @@ export default function DiscussionTimer({ room, isHost }: { room: Room; isHost: 
         <div className="flex items-center gap-2">
           {isIdle && (
             <button
-              className="text-sm px-4 py-2 rounded border border-neutral-300 dark:border-neutral-700"
+              className="text-sm px-4 py-2 rounded-md border border-neutral-300 dark:border-neutral-700"
               onClick={() => startTimer(room.id)}
             >
               시작
@@ -92,7 +92,7 @@ export default function DiscussionTimer({ room, isHost }: { room: Room; isHost: 
           )}
           {isRunning && !isDone && (
             <button
-              className="text-sm px-4 py-2 rounded border border-neutral-300 dark:border-neutral-700"
+              className="text-sm px-4 py-2 rounded-md border border-neutral-300 dark:border-neutral-700"
               onClick={() => pauseTimer(room)}
             >
               일시정지
@@ -100,7 +100,7 @@ export default function DiscussionTimer({ room, isHost }: { room: Room; isHost: 
           )}
           {isPaused && (
             <button
-              className="text-sm px-4 py-2 rounded border border-neutral-300 dark:border-neutral-700"
+              className="text-sm px-4 py-2 rounded-md border border-neutral-300 dark:border-neutral-700"
               onClick={() => resumeTimer(room)}
             >
               재개
@@ -108,7 +108,7 @@ export default function DiscussionTimer({ room, isHost }: { room: Room; isHost: 
           )}
           {(isPaused || isDone) && (
             <button
-              className={`text-sm px-4 py-2 rounded border ${
+              className={`text-sm px-4 py-2 rounded-md border ${
                 isDone ? "border-white text-white" : "border-neutral-300 dark:border-neutral-700"
               }`}
               onClick={() => clearTimer(room.id)}

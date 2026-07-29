@@ -71,14 +71,14 @@ export default function Voting({
               <button
                 disabled={submitting}
                 onClick={() => vote(true)}
-                className="rounded-md bg-blue-600 text-white py-4 font-medium disabled:opacity-50"
+                className="rounded-lg bg-blue-600 text-white py-4 font-medium disabled:opacity-50"
               >
                 찬성
               </button>
               <button
                 disabled={submitting}
                 onClick={() => vote(false)}
-                className="rounded-md bg-red-600 text-white py-4 font-medium disabled:opacity-50"
+                className="rounded-lg bg-red-600 text-white py-4 font-medium disabled:opacity-50"
               >
                 반대
               </button>
@@ -102,7 +102,7 @@ export default function Voting({
               return (
                 <li
                   key={p.id}
-                  className="flex items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
+                  className="flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
                 >
                   <span>{p.nickname}</span>
                   <span className={v?.approve ? "text-blue-500" : "text-red-500"}>
@@ -117,7 +117,7 @@ export default function Voting({
             <button
               disabled={advancing}
               onClick={handleNext}
-              className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
+              className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
             >
               {advancing ? "진행하는 중..." : "다음"}
             </button>

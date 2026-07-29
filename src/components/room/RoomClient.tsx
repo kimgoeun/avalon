@@ -119,7 +119,7 @@ export default function RoomClient({ roomCode }: { roomCode: string }) {
       {content}
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-          <div className="w-full max-w-sm space-y-4 rounded-lg bg-white dark:bg-neutral-900 p-5 shadow-lg">
+          <div className="w-full max-w-sm space-y-4 rounded-xl bg-white dark:bg-neutral-900 p-5 shadow-lg">
             <div className="space-y-1">
               <p className="text-lg font-medium">방을 나가시겠어요?</p>
               <p className="text-base text-neutral-500">
@@ -129,13 +129,13 @@ export default function RoomClient({ roomCode }: { roomCode: string }) {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowLeaveConfirm(false)}
-                className="flex-1 rounded-md border border-neutral-300 dark:border-neutral-700 py-3 text-base font-medium"
+                className="flex-1 rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 text-base font-medium"
               >
                 계속 플레이
               </button>
               <button
                 onClick={leaveRoom}
-                className="flex-1 rounded-md bg-red-600 text-white py-3 text-base font-medium"
+                className="flex-1 rounded-lg bg-red-600 text-white py-3 text-base font-medium"
               >
                 나가기
               </button>

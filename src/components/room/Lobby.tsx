@@ -61,7 +61,7 @@ export default function Lobby({ room, players, isHost }: { room: Room; players: 
           {players.map((p, i) => (
             <li
               key={p.id}
-              className="flex items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
+              className="flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
             >
               <span className="flex items-center gap-2">
                 <span className="text-sm text-neutral-400 w-4 text-right">{i + 1}</span>
@@ -75,7 +75,7 @@ export default function Lobby({ room, players, isHost }: { room: Room; players: 
                     aria-label="위로"
                     disabled={i === 0}
                     onClick={() => movePlayer(players, p.id, "up")}
-                    className="w-8 h-8 flex items-center justify-center rounded border border-neutral-300 dark:border-neutral-700 disabled:opacity-30"
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-300 dark:border-neutral-700 disabled:opacity-30"
                   >
                     ▲
                   </button>
@@ -84,7 +84,7 @@ export default function Lobby({ room, players, isHost }: { room: Room; players: 
                     aria-label="아래로"
                     disabled={i === players.length - 1}
                     onClick={() => movePlayer(players, p.id, "down")}
-                    className="w-8 h-8 flex items-center justify-center rounded border border-neutral-300 dark:border-neutral-700 disabled:opacity-30"
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-300 dark:border-neutral-700 disabled:opacity-30"
                   >
                     ▼
                   </button>
@@ -122,7 +122,7 @@ export default function Lobby({ room, players, isHost }: { room: Room; players: 
           <button
             disabled={!canStart || starting}
             onClick={handleStart}
-            className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
+            className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
           >
             {starting ? "시작하는 중..." : "게임 시작"}
           </button>
@@ -147,7 +147,7 @@ function RoleToggle({
 }) {
   return (
     <label
-      className={`flex items-center gap-2 rounded-md border border-neutral-200 dark:border-neutral-800 px-4 py-3 ${
+      className={`flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 px-4 py-3 ${
         disabled ? "opacity-50 cursor-default" : "cursor-pointer"
       }`}
     >

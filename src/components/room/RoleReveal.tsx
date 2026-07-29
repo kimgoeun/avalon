@@ -33,7 +33,7 @@ export default function RoleReveal({
       {!revealed ? (
         <button
           onClick={() => setRevealed(true)}
-          className="w-full aspect-[3/4] rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center text-xl font-medium"
+          className="w-full aspect-[3/4] rounded-2xl border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center text-xl font-medium"
         >
           탭하여 내 역할 확인하기
           <br />
@@ -41,7 +41,7 @@ export default function RoleReveal({
         </button>
       ) : (
         <div
-          className={`w-full rounded-xl p-6 space-y-4 text-white ${
+          className={`w-full rounded-2xl p-6 space-y-4 text-white ${
             evil ? "bg-gradient-to-b from-red-700 to-red-900" : "bg-gradient-to-b from-blue-700 to-blue-900"
           }`}
         >
@@ -52,7 +52,7 @@ export default function RoleReveal({
           <p className="text-base opacity-90 text-center">{ROLE_DESCRIPTION[role]}</p>
 
           {visibleInfo.map((info) => (
-            <div key={info.label} className="rounded-lg bg-black/20 p-3 space-y-1">
+            <div key={info.label} className="rounded-xl bg-black/20 p-3 space-y-1">
               <p className="text-sm opacity-80">{info.label}</p>
               {info.players.length === 0 ? (
                 <p className="text-base italic opacity-70">정보 없음</p>
@@ -70,7 +70,7 @@ export default function RoleReveal({
 
           <button
             onClick={() => setRevealed(false)}
-            className="w-full rounded-md bg-white/10 py-3 text-base font-medium"
+            className="w-full rounded-lg bg-white/10 py-3 text-base font-medium"
           >
             숨기기
           </button>
@@ -80,7 +80,7 @@ export default function RoleReveal({
       {me.is_host && (
         <button
           onClick={() => advanceToTeamBuilding(room.id)}
-          className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium"
+          className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium"
         >
           모두 확인했어요, 게임 시작하기
         </button>

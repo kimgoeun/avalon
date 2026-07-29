@@ -29,7 +29,7 @@ export default function GameOver({ room, players, me }: { room: Room; players: P
   return (
     <div className="w-full max-w-md mx-auto space-y-6 p-6">
       <div
-        className={`text-center rounded-xl p-6 text-white ${
+        className={`text-center rounded-2xl p-6 text-white ${
           goodWon ? "bg-gradient-to-b from-blue-700 to-blue-900" : "bg-gradient-to-b from-red-700 to-red-900"
         }`}
       >
@@ -45,7 +45,7 @@ export default function GameOver({ room, players, me }: { room: Room; players: P
             return (
               <li
                 key={p.id}
-                className="flex items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
+                className="flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
               >
                 <span>{p.nickname}</span>
                 <span className={evil ? "text-red-500" : "text-blue-500"}>
@@ -61,7 +61,7 @@ export default function GameOver({ room, players, me }: { room: Room; players: P
         <button
           disabled={resetting}
           onClick={handleReset}
-          className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
+          className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
         >
           {resetting ? "초기화 중..." : "이 방에서 새 게임 시작하기"}
         </button>

@@ -36,7 +36,7 @@ export default function JoinForm({ roomCode, onJoined }: { roomCode: string; onJ
       </div>
       <form onSubmit={handleSubmit} className="space-y-3">
         <input
-          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-400"
+          className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-400"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
           placeholder="닉네임"
@@ -46,7 +46,7 @@ export default function JoinForm({ roomCode, onJoined }: { roomCode: string; onJ
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
+          className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
         >
           {loading ? "참가하는 중..." : "참가하기"}
         </button>

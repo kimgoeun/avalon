@@ -42,7 +42,7 @@ export default function Assassinate({ room, players, me }: { room: Room; players
           <li key={p.id}>
             <button
               onClick={() => setTarget(p.id)}
-              className={`w-full rounded-md border px-4 py-3 text-base ${
+              className={`w-full rounded-lg border px-4 py-3 text-base ${
                 target === p.id
                   ? "border-red-400 bg-red-50 dark:bg-red-950/30"
                   : "border-neutral-200 dark:border-neutral-800"
@@ -57,7 +57,7 @@ export default function Assassinate({ room, players, me }: { room: Room; players
       <button
         disabled={!target || submitting}
         onClick={confirm}
-        className="w-full rounded-md bg-red-600 text-white py-3.5 font-medium disabled:opacity-50"
+        className="w-full rounded-lg bg-red-600 text-white py-3.5 font-medium disabled:opacity-50"
       >
         {submitting ? "처리 중..." : "암살 확정"}
       </button>
