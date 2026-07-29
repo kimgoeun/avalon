@@ -54,16 +54,16 @@ export default function Voting({
       <QuestTrack room={room} quests={quests} playerCount={players.length} />
 
       <div className="text-center space-y-1">
-        <p className="text-sm text-neutral-500">
+        <p className="text-base text-neutral-500">
           라운드 {room.round} · {leader.nickname}님의 원정대 제안
         </p>
-        <p className="text-lg font-medium">{teamNicknames.join(", ")}</p>
+        <p className="text-xl font-medium">{teamNicknames.join(", ")}</p>
       </div>
 
       {!allVoted ? (
         <>
           {myVote ? (
-            <p className="text-center text-sm text-neutral-500">
+            <p className="text-center text-base text-neutral-500">
               투표 완료! 다른 사람들을 기다리는 중... ({votes.length}/{players.length})
             </p>
           ) : (
@@ -71,28 +71,28 @@ export default function Voting({
               <button
                 disabled={submitting}
                 onClick={() => vote(true)}
-                className="rounded-md bg-blue-600 text-white py-3 font-medium disabled:opacity-50"
+                className="rounded-md bg-blue-600 text-white py-4 font-medium disabled:opacity-50"
               >
                 찬성
               </button>
               <button
                 disabled={submitting}
                 onClick={() => vote(false)}
-                className="rounded-md bg-red-600 text-white py-3 font-medium disabled:opacity-50"
+                className="rounded-md bg-red-600 text-white py-4 font-medium disabled:opacity-50"
               >
                 반대
               </button>
             </div>
           )}
           {!myVote && (
-            <p className="text-center text-xs text-neutral-500">
+            <p className="text-center text-sm text-neutral-500">
               {votes.length}/{players.length}명 투표 완료
             </p>
           )}
         </>
       ) : (
         <div className="space-y-3">
-          <p className="text-center text-sm font-medium">
+          <p className="text-center text-base font-medium">
             찬성 {approveCount} · 반대 {rejectCount} —{" "}
             {approveCount > players.length / 2 ? "가결" : "부결"}
           </p>
@@ -102,7 +102,7 @@ export default function Voting({
               return (
                 <li
                   key={p.id}
-                  className="flex items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm"
+                  className="flex items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
                 >
                   <span>{p.nickname}</span>
                   <span className={v?.approve ? "text-blue-500" : "text-red-500"}>
@@ -117,12 +117,12 @@ export default function Voting({
             <button
               disabled={advancing}
               onClick={handleNext}
-              className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-2.5 font-medium disabled:opacity-50"
+              className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
             >
               {advancing ? "진행하는 중..." : "다음"}
             </button>
           ) : (
-            <p className="text-center text-sm text-neutral-500">방장이 다음으로 넘길 때까지 기다려주세요...</p>
+            <p className="text-center text-base text-neutral-500">방장이 다음으로 넘길 때까지 기다려주세요...</p>
           )}
         </div>
       )}

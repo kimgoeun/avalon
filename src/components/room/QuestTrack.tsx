@@ -20,7 +20,7 @@ export default function QuestTrack({ room, quests, playerCount }: { room: Room; 
           return (
             <div key={round} className="flex flex-col items-center gap-1">
               <div
-                className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 flex items-center justify-center text-sm font-bold ${
+                className={`h-12 w-12 sm:h-14 sm:w-14 rounded-full border-2 flex items-center justify-center text-base font-bold ${
                   result === "success"
                     ? "bg-blue-500 border-blue-500 text-white"
                     : result === "fail"
@@ -33,7 +33,7 @@ export default function QuestTrack({ room, quests, playerCount }: { room: Room; 
                 {result === "success" ? "O" : result === "fail" ? "X" : size}
               </div>
               {config.failsRequired[i] === 2 && (
-                <span className="text-[10px] text-neutral-500">2실패</span>
+                <span className="text-xs text-neutral-500">2실패</span>
               )}
             </div>
           );
@@ -41,16 +41,16 @@ export default function QuestTrack({ room, quests, playerCount }: { room: Room; 
       </div>
 
       <div className="flex items-center gap-1.5">
-        <span className="text-[10px] text-neutral-500 mr-1">부결</span>
+        <span className="text-xs text-neutral-500 mr-1">부결</span>
         {Array.from({ length: 5 }, (_, i) => i + 1).map((n) => (
           <div
             key={n}
-            className={`h-3 w-3 rounded-full border-2 ${
+            className={`h-4 w-4 rounded-full border-2 ${
               n <= room.reject_count ? "bg-red-500 border-red-500" : "border-neutral-300 dark:border-neutral-700"
             }`}
           />
         ))}
-        <span className="text-[10px] text-neutral-500 ml-1">{room.reject_count}/5</span>
+        <span className="text-xs text-neutral-500 ml-1">{room.reject_count}/5</span>
       </div>
     </div>
   );

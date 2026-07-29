@@ -33,19 +33,19 @@ export default function GameOver({ room, players, me }: { room: Room; players: P
           goodWon ? "bg-gradient-to-b from-blue-700 to-blue-900" : "bg-gradient-to-b from-red-700 to-red-900"
         }`}
       >
-        <p className="text-3xl font-bold">{goodWon ? "선 진영 승리" : "악당 진영 승리"}</p>
-        <p className="text-sm opacity-90 mt-1">{room.win_reason ? REASON_LABEL[room.win_reason] : ""}</p>
+        <p className="text-4xl font-bold">{goodWon ? "선 진영 승리" : "악당 진영 승리"}</p>
+        <p className="text-base opacity-90 mt-1">{room.win_reason ? REASON_LABEL[room.win_reason] : ""}</p>
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium">전체 역할 공개</p>
+        <p className="text-base font-medium">전체 역할 공개</p>
         <ul className="space-y-1">
           {players.map((p) => {
             const evil = isEvil(p.role as Role);
             return (
               <li
                 key={p.id}
-                className="flex items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm"
+                className="flex items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
               >
                 <span>{p.nickname}</span>
                 <span className={evil ? "text-red-500" : "text-blue-500"}>
@@ -61,12 +61,12 @@ export default function GameOver({ room, players, me }: { room: Room; players: P
         <button
           disabled={resetting}
           onClick={handleReset}
-          className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-2.5 font-medium disabled:opacity-50"
+          className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
         >
           {resetting ? "초기화 중..." : "이 방에서 새 게임 시작하기"}
         </button>
       ) : (
-        <p className="text-center text-sm text-neutral-500">방장이 새 게임을 시작할 수 있어요</p>
+        <p className="text-center text-base text-neutral-500">방장이 새 게임을 시작할 수 있어요</p>
       )}
     </div>
   );

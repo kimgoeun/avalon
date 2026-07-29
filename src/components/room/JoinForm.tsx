@@ -31,22 +31,22 @@ export default function JoinForm({ roomCode, onJoined }: { roomCode: string; onJ
   return (
     <div className="w-full max-w-sm mx-auto p-6 space-y-4">
       <div className="text-center space-y-1">
-        <p className="text-sm text-neutral-500">방 코드</p>
-        <p className="text-3xl font-bold tracking-[0.3em]">{roomCode}</p>
+        <p className="text-base text-neutral-500">방 코드</p>
+        <p className="text-4xl font-bold tracking-[0.3em]">{roomCode}</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-3">
         <input
-          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 outline-none focus:ring-2 focus:ring-neutral-400"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-400"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
           placeholder="닉네임"
           maxLength={12}
         />
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-base text-red-500">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-2.5 font-medium disabled:opacity-50"
+          className="w-full rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
         >
           {loading ? "참가하는 중..." : "참가하기"}
         </button>

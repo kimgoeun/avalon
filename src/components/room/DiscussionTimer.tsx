@@ -73,10 +73,10 @@ export default function DiscussionTimer({ room, isHost }: { room: Room; isHost: 
           : "border-neutral-200 dark:border-neutral-800"
       }`}
     >
-      <span className={`text-xs ${isDone ? "text-white" : "text-neutral-500"}`}>
+      <span className={`text-sm ${isDone ? "text-white" : "text-neutral-500"}`}>
         {isDone ? "토론 시간 종료" : "토론 타이머"}
       </span>
-      <span className={`text-3xl font-mono font-bold tabular-nums ${isDone ? "text-white" : ""}`}>
+      <span className={`text-4xl font-mono font-bold tabular-nums ${isDone ? "text-white" : ""}`}>
         {formatTime(remainingSec)}
       </span>
 
@@ -84,7 +84,7 @@ export default function DiscussionTimer({ room, isHost }: { room: Room; isHost: 
         <div className="flex items-center gap-2">
           {isIdle && (
             <button
-              className="text-xs px-3 py-1.5 rounded border border-neutral-300 dark:border-neutral-700"
+              className="text-sm px-4 py-2 rounded border border-neutral-300 dark:border-neutral-700"
               onClick={() => startTimer(room.id)}
             >
               시작
@@ -92,7 +92,7 @@ export default function DiscussionTimer({ room, isHost }: { room: Room; isHost: 
           )}
           {isRunning && !isDone && (
             <button
-              className="text-xs px-3 py-1.5 rounded border border-neutral-300 dark:border-neutral-700"
+              className="text-sm px-4 py-2 rounded border border-neutral-300 dark:border-neutral-700"
               onClick={() => pauseTimer(room)}
             >
               일시정지
@@ -100,7 +100,7 @@ export default function DiscussionTimer({ room, isHost }: { room: Room; isHost: 
           )}
           {isPaused && (
             <button
-              className="text-xs px-3 py-1.5 rounded border border-neutral-300 dark:border-neutral-700"
+              className="text-sm px-4 py-2 rounded border border-neutral-300 dark:border-neutral-700"
               onClick={() => resumeTimer(room)}
             >
               재개
@@ -108,7 +108,7 @@ export default function DiscussionTimer({ room, isHost }: { room: Room; isHost: 
           )}
           {(isPaused || isDone) && (
             <button
-              className={`text-xs px-3 py-1.5 rounded border ${
+              className={`text-sm px-4 py-2 rounded border ${
                 isDone ? "border-white text-white" : "border-neutral-300 dark:border-neutral-700"
               }`}
               onClick={() => clearTimer(room.id)}
