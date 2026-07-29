@@ -79,6 +79,22 @@ export async function joinRoom(code: string, nickname: string) {
   throw new Error("참가에 실패했습니다. 다시 시도해주세요.");
 }
 
+export async function removePlayerFromRoom(player: Player) {
+  await supabase.from("players").delete().eq("id", player.id);
+
+  if (player.is_host) {
+    const { data: remaining } = await supabase
+      .from("players")
+      .select()
+      .eq("room_id", player.room_id)
+      .order("seat_order", { ascending: true })
+      .limit(1);
+    if (remaining && remaining.length) {
+      await supabase.from("players").update({ is_host: true }).eq("id", remaining[0].id);
+    }
+  }
+}
+
 export async function movePlayer(players: Player[], playerId: string, direction: "up" | "down") {
   const sorted = [...players].sort((a, b) => a.seat_order - b.seat_order);
   const idx = sorted.findIndex((p) => p.id === playerId);

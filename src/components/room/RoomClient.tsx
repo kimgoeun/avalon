@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRoom } from "@/hooks/useRoom";
+import { removePlayerFromRoom } from "@/lib/actions";
 import { clearSession, loadSession } from "@/lib/session";
 import JoinForm from "./JoinForm";
 import Lobby from "./Lobby";
@@ -35,7 +36,8 @@ export default function RoomClient({ roomCode }: { roomCode: string }) {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [inRoom]);
 
-  function leaveRoom() {
+  async function leaveRoom() {
+    if (me) await removePlayerFromRoom(me);
     clearSession(roomCode);
     router.push("/");
   }
