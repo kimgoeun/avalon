@@ -83,5 +83,22 @@ export function useRoom(roomCode: string): RoomData {
     };
   }, [roomCode, fetchAll]);
 
+  // Realtime can silently miss events (a join landing before the subscription finishes
+  // connecting, a dropped websocket on mobile, a backgrounded tab). Two fallbacks catch those:
+  // a periodic poll, and an immediate refetch when the tab/app regains focus or visibility.
+  useEffect(() => {
+    const interval = setInterval(() => fetchAll(), 5000);
+    function handleVisible() {
+      if (document.visibilityState === "visible") fetchAll();
+    }
+    document.addEventListener("visibilitychange", handleVisible);
+    window.addEventListener("focus", handleVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisible);
+      window.removeEventListener("focus", handleVisible);
+    };
+  }, [fetchAll]);
+
   return { room, players, quests, votes, questCards, loading, error, refetch: fetchAll };
 }
