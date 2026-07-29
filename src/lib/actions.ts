@@ -274,7 +274,14 @@ export async function resolveVotesIfComplete(room: Room, players: Player[], ques
   });
   await supabase
     .from("rooms")
-    .update({ phase: "team_building", reject_count: newRejectCount, leader_index: nextLeaderIndex })
+    .update({
+      phase: "team_building",
+      reject_count: newRejectCount,
+      leader_index: nextLeaderIndex,
+      timer_ends_at: null,
+      timer_remaining_sec: null,
+      timer_label: null,
+    })
     .eq("id", room.id);
 }
 
@@ -331,6 +338,14 @@ export async function resolveQuestIfComplete(
   });
   await supabase
     .from("rooms")
-    .update({ phase: "team_building", round: nextRound, leader_index: nextLeaderIndex, reject_count: 0 })
+    .update({
+      phase: "team_building",
+      round: nextRound,
+      leader_index: nextLeaderIndex,
+      reject_count: 0,
+      timer_ends_at: null,
+      timer_remaining_sec: null,
+      timer_label: null,
+    })
     .eq("id", room.id);
 }
