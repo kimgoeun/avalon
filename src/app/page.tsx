@@ -56,17 +56,6 @@ export default function HomePage() {
         <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-700 overflow-hidden">
           <button
             className={`flex-1 py-2 text-sm font-medium transition ${
-              mode === "create"
-                ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                : "bg-transparent"
-            }`}
-            onClick={() => setMode("create")}
-            type="button"
-          >
-            방 만들기
-          </button>
-          <button
-            className={`flex-1 py-2 text-sm font-medium transition ${
               mode === "join"
                 ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
                 : "bg-transparent"
@@ -75,6 +64,17 @@ export default function HomePage() {
             type="button"
           >
             참가하기
+          </button>
+          <button
+            className={`flex-1 py-2 text-sm font-medium transition ${
+              mode === "create"
+                ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                : "bg-transparent"
+            }`}
+            onClick={() => setMode("create")}
+            type="button"
+          >
+            방 만들기
           </button>
         </div>
 
