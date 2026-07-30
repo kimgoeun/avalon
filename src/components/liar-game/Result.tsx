@@ -14,7 +14,6 @@ export default function Result({
   me: LiarPlayer;
 }) {
   const [resetting, setResetting] = useState(false);
-  const liars = players.filter((p) => p.is_liar);
 
   async function handleReset() {
     setResetting(true);
@@ -27,11 +26,6 @@ export default function Result({
 
   return (
     <div className="w-full max-w-md mx-auto space-y-6 p-6">
-      <div className="text-center rounded-2xl p-6 text-white bg-gradient-to-b from-red-700 to-red-900 space-y-2">
-        <p className="text-sm uppercase tracking-widest opacity-80">라이어는</p>
-        <p className="text-3xl font-bold">{liars.map((p) => p.nickname).join(", ") || "없음"}</p>
-      </div>
-
       <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 text-center space-y-1">
         <p className="text-sm text-neutral-500">카테고리</p>
         <p className="text-lg font-medium">{room.category}</p>
