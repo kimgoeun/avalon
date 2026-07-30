@@ -251,7 +251,8 @@ export async function resolveVotesIfComplete(room: Room, players: Player[], ques
   const majorityApprove = approveCount > players.length / 2;
 
   if (majorityApprove) {
-    await supabase.from("rooms").update({ phase: "quest", reject_count: 0 }).eq("id", room.id);
+    // reject_count is not reset here: rejections accumulate across the whole game, not per round.
+    await supabase.from("rooms").update({ phase: "quest" }).eq("id", room.id);
     return;
   }
 
@@ -342,7 +343,7 @@ export async function resolveQuestIfComplete(
       phase: "team_building",
       round: nextRound,
       leader_index: nextLeaderIndex,
-      reject_count: 0,
+      // reject_count is not reset here: rejections accumulate across the whole game, not per round.
       timer_ends_at: null,
       timer_remaining_sec: null,
       timer_label: null,
