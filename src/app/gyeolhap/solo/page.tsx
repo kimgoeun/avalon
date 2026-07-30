@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MAX_ROUNDS, comboKey, dealBoard, findAllCombos, isValidCombo } from "@/lib/gyeolhap";
 import CardFace from "@/components/gyeolhap/CardFace";
@@ -18,7 +18,9 @@ export default function GyeolhapSoloPage() {
   const [finished, setFinished] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; kind: "success" | "fail" } | null>(null);
+  const [scoreFlash, setScoreFlash] = useState<"up" | "down" | null>(null);
+  const scoreFlashTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function dealRound() {
     setBoard(dealBoard());
@@ -47,9 +49,13 @@ export default function GyeolhapSoloPage() {
     return () => clearInterval(interval);
   }, [startedAt, finished]);
 
-  function flash(message: string) {
-    setFeedback(message);
+  function flash(message: string, kind: "success" | "fail") {
+    setFeedback({ message, kind });
     setTimeout(() => setFeedback(null), 1800);
+
+    if (scoreFlashTimeout.current) clearTimeout(scoreFlashTimeout.current);
+    setScoreFlash(kind === "success" ? "up" : "down");
+    scoreFlashTimeout.current = setTimeout(() => setScoreFlash(null), 400);
   }
 
   function toggleCard(code: number) {
@@ -69,10 +75,10 @@ export default function GyeolhapSoloPage() {
     if (success) {
       setFoundSets((prev) => [...prev, key]);
       setScore((s) => s + 1);
-      flash("결합 성공! +1");
+      flash("결합 성공! +1", "success");
     } else {
       setScore((s) => s - 1);
-      flash("결합이 아니에요 -1");
+      flash("결합이 아니에요 -1", "fail");
     }
 
     setSelected([]);
@@ -84,7 +90,7 @@ export default function GyeolhapSoloPage() {
 
     if (correct) {
       setScore((s) => s + 3);
-      flash("결! 정답이에요 +3");
+      flash("결! 정답이에요 +3", "success");
       if (round >= MAX_ROUNDS) {
         setFinished(true);
       } else {
@@ -93,7 +99,7 @@ export default function GyeolhapSoloPage() {
       }
     } else {
       setScore((s) => s - 1);
-      flash("결! 아직 남아있어요 -1");
+      flash("결! 아직 남아있어요 -1", "fail");
     }
   }
 
@@ -113,7 +119,17 @@ export default function GyeolhapSoloPage() {
           </div>
           <div className="text-center flex-1">
             <p className="text-sm text-neutral-500">점수</p>
-            <p className="text-2xl font-bold">{score}</p>
+            <p
+              className={`text-2xl transition-colors duration-1000 ${
+                scoreFlash === "up"
+                  ? "font-extrabold text-blue-500 dark:text-blue-400"
+                  : scoreFlash === "down"
+                    ? "font-extrabold text-pink-500 dark:text-pink-400"
+                    : "font-bold"
+              }`}
+            >
+              {score}
+            </p>
           </div>
           <div className="text-center flex-1">
             <p className="text-sm text-neutral-500">시간</p>
@@ -136,7 +152,17 @@ export default function GyeolhapSoloPage() {
           </div>
         ) : (
           <>
-            <p className="h-7 text-center text-lg font-medium text-indigo-600">{feedback}</p>
+            <p
+              className={`h-7 text-center text-lg font-medium ${
+                feedback?.kind === "success"
+                  ? "text-blue-500 dark:text-blue-400"
+                  : feedback?.kind === "fail"
+                    ? "text-pink-500 dark:text-pink-400"
+                    : ""
+              }`}
+            >
+              {feedback?.message}
+            </p>
 
             <div className="grid grid-cols-3 gap-3">
               {board.map((code) => {
