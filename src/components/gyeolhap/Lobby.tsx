@@ -75,7 +75,7 @@ export default function Lobby({
                     onClick={() => setFirstPlayerId(p.id)}
                     className={`rounded-lg border px-4 py-3 text-base transition ${
                       chosenFirst === p.id
-                        ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30"
+                        ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30"
                         : "border-neutral-200 dark:border-neutral-800"
                     }`}
                   >

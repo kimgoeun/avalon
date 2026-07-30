@@ -134,8 +134,10 @@ export default function GyeolhapSoloPage() {
                     key={code}
                     type="button"
                     onClick={() => toggleCard(code)}
-                    className={`rounded-xl border-4 p-1 transition cursor-pointer ${
-                      isSelected ? "border-amber-400" : "border-transparent"
+                    className={`rounded-2xl transition-all duration-150 cursor-pointer ${
+                      isSelected
+                        ? "-translate-y-1.5 ring-4 ring-indigo-400 shadow-lg shadow-indigo-500/20"
+                        : "shadow-sm hover:-translate-y-1"
                     }`}
                   >
                     <CardFace code={code} />
@@ -147,7 +149,7 @@ export default function GyeolhapSoloPage() {
             <button
               disabled={selected.length !== 3}
               onClick={submit}
-              className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
+              className="w-full rounded-xl bg-indigo-600 text-white py-3.5 font-medium shadow-md shadow-indigo-500/25 transition hover:bg-indigo-500 disabled:opacity-40 disabled:shadow-none"
             >
               결합 확인 ({selected.length}/3)
             </button>

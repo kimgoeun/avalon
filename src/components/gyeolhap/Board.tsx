@@ -87,7 +87,7 @@ export default function Board({
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {boardCards.map((c) => {
           const isSelected = selected.includes(c.id);
           return (
@@ -96,11 +96,11 @@ export default function Board({
               type="button"
               disabled={!isMyTurn || submitting}
               onClick={() => toggleCard(c.id)}
-              className={`rounded-xl border-4 p-1 transition ${
+              className={`rounded-2xl transition-all duration-150 ${
                 isSelected
-                  ? "border-amber-400"
-                  : "border-transparent"
-              } ${isMyTurn ? "cursor-pointer" : "cursor-default"}`}
+                  ? "-translate-y-1.5 ring-4 ring-indigo-400 shadow-lg shadow-indigo-500/20"
+                  : "shadow-sm"
+              } ${isMyTurn && !submitting ? "cursor-pointer hover:-translate-y-1" : "cursor-default opacity-90"}`}
             >
               <CardFace code={c.card_code} />
             </button>
@@ -112,7 +112,7 @@ export default function Board({
         <button
           disabled={selected.length !== 3 || submitting}
           onClick={handleClaim}
-          className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
+          className="w-full rounded-xl bg-indigo-600 text-white py-3.5 font-medium shadow-md shadow-indigo-500/25 transition hover:bg-indigo-500 disabled:opacity-40 disabled:shadow-none"
         >
           {submitting ? "확인하는 중..." : `결합 선언! (${selected.length}/3)`}
         </button>

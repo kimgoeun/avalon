@@ -1,4 +1,4 @@
-import { COLOR_HEX, decodeCard } from "@/lib/gyeolhap";
+import { COLOR_HEX, COLOR_TINT_HEX, decodeCard } from "@/lib/gyeolhap";
 
 export default function CardFace({ code }: { code: number }) {
   const { shape, bg, fg } = decodeCard(code);
@@ -6,25 +6,15 @@ export default function CardFace({ code }: { code: number }) {
 
   return (
     <div
-      className="aspect-square w-full rounded-lg flex items-center justify-center"
-      style={{ backgroundColor: COLOR_HEX[bg] }}
+      className="aspect-square w-full rounded-2xl flex items-center justify-center border border-black/5"
+      style={{ backgroundColor: COLOR_TINT_HEX[bg] }}
     >
-      <svg viewBox="0 0 100 100" className="h-3/4 w-3/4">
-        {shape === "circle" && (
-          <circle cx="50" cy="50" r="35" fill={fill} stroke="rgba(0,0,0,0.35)" strokeWidth="4" />
-        )}
+      <svg viewBox="0 0 100 100" className="h-3/5 w-3/5 drop-shadow-sm">
+        {shape === "circle" && <circle cx="50" cy="50" r="34" fill={fill} />}
         {shape === "triangle" && (
-          <polygon
-            points="50,15 85,80 15,80"
-            fill={fill}
-            stroke="rgba(0,0,0,0.35)"
-            strokeWidth="4"
-            strokeLinejoin="round"
-          />
+          <polygon points="50,14 87,82 13,82" fill={fill} strokeLinejoin="round" />
         )}
-        {shape === "square" && (
-          <rect x="18" y="18" width="64" height="64" fill={fill} stroke="rgba(0,0,0,0.35)" strokeWidth="4" />
-        )}
+        {shape === "square" && <rect x="16" y="16" width="68" height="68" rx="14" fill={fill} />}
       </svg>
     </div>
   );

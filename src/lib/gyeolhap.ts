@@ -4,10 +4,19 @@ export type Shape = (typeof SHAPES)[number];
 export const COLORS = ["green", "indigo", "magenta"] as const;
 export type ColorName = (typeof COLORS)[number];
 
+// Bold fill for the shape itself.
 export const COLOR_HEX: Record<ColorName, string> = {
-  green: "#1DB870",
+  green: "#16A34A",
   indigo: "#4F46E5",
-  magenta: "#E0189B",
+  magenta: "#DB2777",
+};
+
+// Soft tint for the card face background — always distinct from COLOR_HEX so a
+// shape stays legible even when its own color matches the card's background attribute.
+export const COLOR_TINT_HEX: Record<ColorName, string> = {
+  green: "#DCFCE7",
+  indigo: "#E0E7FF",
+  magenta: "#FCE7F3",
 };
 
 export const SHAPE_LABEL: Record<Shape, string> = {
