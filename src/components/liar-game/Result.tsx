@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { LiarPlayer, LiarRoom } from "@/lib/liar-game-actions";
-import { resetRoom } from "@/lib/liar-game-actions";
+import { markLiarCaught, markWordGuessed, resetRoom } from "@/lib/liar-game-actions";
 
 export default function Result({
   room,
@@ -13,31 +13,24 @@ export default function Result({
   players: LiarPlayer[];
   me: LiarPlayer;
 }) {
-  const [resetting, setResetting] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  async function handleReset() {
-    setResetting(true);
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
     try {
-      await resetRoom(room, players);
+      await action();
     } finally {
-      setResetting(false);
+      setBusy(false);
     }
   }
 
+  const stage = room.result_stage;
+
   return (
     <div className="w-full max-w-md mx-auto space-y-6 p-6">
-      <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 text-center space-y-1">
-        <p className="text-sm text-neutral-500">카테고리</p>
-        <p className="text-lg font-medium">{room.category}</p>
-        <p className="text-sm text-neutral-500 mt-3">진짜 제시어</p>
-        <p className="text-3xl font-bold">{room.word}</p>
-        {room.liar_mode === "fakeWord" && room.liar_word && (
-          <>
-            <p className="text-sm text-neutral-500 mt-3">라이어가 본 가짜 제시어</p>
-            <p className="text-xl font-bold text-red-500">{room.liar_word}</p>
-          </>
-        )}
-      </div>
+      {room.liar_mode === "fakeWord" && room.liar_word && (
+        <p className="text-center text-sm text-neutral-500">라이어가 본 가짜 제시어: {room.liar_word}</p>
+      )}
 
       <ul className="space-y-1">
         {players.map((p) => (
@@ -55,6 +48,107 @@ export default function Result({
           </li>
         ))}
       </ul>
+
+      {stage === "liar_reveal" && (
+        <div className="space-y-3">
+          <p className="text-center text-base font-medium">여러분이 라이어를 정확히 찾아냈나요?</p>
+          {me.is_host ? (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                disabled={busy}
+                onClick={() => run(() => markLiarCaught(room.id, false))}
+                className="rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
+              >
+                못 찾았어요
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => run(() => markLiarCaught(room.id, true))}
+                className="rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3 font-medium disabled:opacity-50"
+              >
+                찾았어요
+              </button>
+            </div>
+          ) : (
+            <p className="text-center text-base text-neutral-500">방장이 결과를 진행 중이에요...</p>
+          )}
+        </div>
+      )}
+
+      {stage === "word_check" && (
+        <div className="space-y-3">
+          <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 text-center space-y-1">
+            <p className="text-sm text-neutral-500">진짜 제시어</p>
+            <p className="text-3xl font-bold">{room.word}</p>
+          </div>
+          <p className="text-center text-base font-medium">라이어가 제시어를 맞췄나요?</p>
+          {me.is_host ? (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                disabled={busy}
+                onClick={() => run(() => markWordGuessed(room.id, false))}
+                className="rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
+              >
+                못 맞췄어요
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => run(() => markWordGuessed(room.id, true))}
+                className="rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3 font-medium disabled:opacity-50"
+              >
+                맞췄어요
+              </button>
+            </div>
+          ) : (
+            <p className="text-center text-base text-neutral-500">방장이 결과를 진행 중이에요...</p>
+          )}
+        </div>
+      )}
+
+      {stage === "done" && (
+        <ResetPanel room={room} players={players} me={me} />
+      )}
+    </div>
+  );
+}
+
+function ResetPanel({
+  room,
+  players,
+  me,
+}: {
+  room: LiarRoom;
+  players: LiarPlayer[];
+  me: LiarPlayer;
+}) {
+  const [resetting, setResetting] = useState(false);
+  const liarWon = room.winner === "liar";
+
+  async function handleReset() {
+    setResetting(true);
+    try {
+      await resetRoom(room, players);
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div
+        className={`text-center rounded-2xl p-6 text-white space-y-1 ${
+          liarWon ? "bg-gradient-to-b from-red-700 to-red-900" : "bg-gradient-to-b from-blue-700 to-blue-900"
+        }`}
+      >
+        <p className="text-4xl font-bold">{liarWon ? "라이어 승리!" : "시민 승리!"}</p>
+      </div>
+
+      <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 text-center space-y-1">
+        <p className="text-sm text-neutral-500">카테고리</p>
+        <p className="text-lg font-medium">{room.category}</p>
+        <p className="text-sm text-neutral-500 mt-3">진짜 제시어</p>
+        <p className="text-3xl font-bold">{room.word}</p>
+      </div>
 
       {me.is_host ? (
         <button

@@ -183,7 +183,9 @@ export type Database = {
           liar_mode: string
           liar_word: string | null
           phase: string
+          result_stage: string
           show_category_to_liar: boolean
+          winner: string | null
           word: string | null
         }
         Insert: {
@@ -195,7 +197,9 @@ export type Database = {
           liar_mode?: string
           liar_word?: string | null
           phase?: string
+          result_stage?: string
           show_category_to_liar?: boolean
+          winner?: string | null
           word?: string | null
         }
         Update: {
@@ -207,7 +211,9 @@ export type Database = {
           liar_mode?: string
           liar_word?: string | null
           phase?: string
+          result_stage?: string
           show_category_to_liar?: boolean
+          winner?: string | null
           word?: string | null
         }
         Relationships: []

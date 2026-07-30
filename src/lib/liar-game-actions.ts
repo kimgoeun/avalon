@@ -140,7 +140,28 @@ export async function startGame(room: LiarRoom, players: LiarPlayer[], options: 
 }
 
 export async function advanceToResult(roomId: string) {
-  await supabase.from("liar_rooms").update({ phase: "result" }).eq("id", roomId);
+  await supabase
+    .from("liar_rooms")
+    .update({ phase: "result", result_stage: "liar_reveal", winner: null })
+    .eq("id", roomId);
+}
+
+// Step 1: was the liar correctly identified? If not, the liar wins outright — no need
+// to check the word. If so, move on to the word-guess step.
+export async function markLiarCaught(roomId: string, caught: boolean) {
+  if (caught) {
+    await supabase.from("liar_rooms").update({ result_stage: "word_check" }).eq("id", roomId);
+  } else {
+    await supabase.from("liar_rooms").update({ result_stage: "done", winner: "liar" }).eq("id", roomId);
+  }
+}
+
+// Step 2 (only reached if the liar was caught): did the liar correctly guess the real word?
+export async function markWordGuessed(roomId: string, guessedCorrectly: boolean) {
+  await supabase
+    .from("liar_rooms")
+    .update({ result_stage: "done", winner: guessedCorrectly ? "liar" : "citizens" })
+    .eq("id", roomId);
 }
 
 export async function resetRoom(room: LiarRoom, players: LiarPlayer[]) {
@@ -152,6 +173,8 @@ export async function resetRoom(room: LiarRoom, players: LiarPlayer[]) {
       category: null,
       word: null,
       liar_word: null,
+      result_stage: "liar_reveal",
+      winner: null,
     })
     .eq("id", room.id);
 }
