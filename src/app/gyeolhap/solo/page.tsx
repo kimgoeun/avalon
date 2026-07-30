@@ -49,7 +49,7 @@ export default function GyeolhapSoloPage() {
 
   function flash(message: string) {
     setFeedback(message);
-    setTimeout(() => setFeedback(null), 700);
+    setTimeout(() => setFeedback(null), 1800);
   }
 
   function toggleCard(code: number) {
@@ -141,7 +141,7 @@ export default function GyeolhapSoloPage() {
           </div>
         ) : (
           <>
-            {feedback && <p className="text-center text-lg font-medium text-indigo-600">{feedback}</p>}
+            <p className="h-7 text-center text-lg font-medium text-indigo-600">{feedback}</p>
 
             <div className="grid grid-cols-3 gap-3">
               {board.map((code) => {
