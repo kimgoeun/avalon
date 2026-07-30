@@ -11,12 +11,13 @@ export const COLOR_HEX: Record<ColorName, string> = {
   magenta: "#DB2777",
 };
 
-// Soft tint for the card face background — always distinct from COLOR_HEX so a
-// shape stays legible even when its own color matches the card's background attribute.
+// Tint for the card face background — always distinct from COLOR_HEX so a shape stays
+// legible even when its own color matches the card's background attribute. Saturated
+// enough that the three backgrounds read apart from each other, not just pale washes.
 export const COLOR_TINT_HEX: Record<ColorName, string> = {
-  green: "#DCFCE7",
-  indigo: "#E0E7FF",
-  magenta: "#FCE7F3",
+  green: "#A7F3D0",
+  indigo: "#C7D2FE",
+  magenta: "#FBCFE8",
 };
 
 export const SHAPE_LABEL: Record<Shape, string> = {
