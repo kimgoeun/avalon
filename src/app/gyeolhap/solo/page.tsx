@@ -106,11 +106,6 @@ export default function GyeolhapSoloPage() {
       </Link>
 
       <div className="w-full max-w-md space-y-6">
-        <div className="text-center space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">혼자하기</h1>
-          <p className="text-base text-neutral-500">9장 안의 합을 다 찾으면 &ldquo;결!&rdquo;을 외치세요</p>
-        </div>
-
         <div className="flex items-center justify-between rounded-xl border border-neutral-200 dark:border-neutral-800 px-4 py-3">
           <div className="text-center flex-1">
             <p className="text-sm text-neutral-500">라운드</p>
