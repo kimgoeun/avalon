@@ -39,7 +39,7 @@ export default function RoomClient({ roomCode }: { roomCode: string }) {
   async function leaveRoom() {
     if (me) await removePlayerFromRoom(me);
     clearSession(roomCode);
-    router.push("/");
+    router.push("/avalon");
   }
 
   const currentQuest = quests.length ? quests[quests.length - 1] : null;
