@@ -125,23 +125,6 @@ export default function Board({
         })}
       </div>
 
-      {foundRows.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm text-neutral-500">이번 라운드에서 찾은 합 ({foundRows.length})</p>
-          <div className="space-y-1.5">
-            {foundRows.map((codes, i) => (
-              <div key={i} className="flex gap-1.5">
-                {codes.map((code) => (
-                  <div key={code} className="w-10">
-                    <CardFace code={code} />
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {inDeclarePhase ? (
         iAmDeclarer && (
           <button
@@ -178,6 +161,23 @@ export default function Board({
         </div>
       ) : (
         <p className="text-center text-base text-neutral-500">상대의 차례를 기다리는 중...</p>
+      )}
+
+      {foundRows.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm text-neutral-500">이번 라운드에서 찾은 합 ({foundRows.length})</p>
+          <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
+            {foundRows.map((codes, i) => (
+              <div key={i} className="flex gap-1.5">
+                {codes.map((code) => (
+                  <div key={code} className="w-10">
+                    <CardFace code={code} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {me.is_host && (

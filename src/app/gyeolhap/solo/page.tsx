@@ -163,23 +163,6 @@ export default function GyeolhapSoloPage() {
               })}
             </div>
 
-            {foundRows.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm text-neutral-500">이번 라운드에서 찾은 합 ({foundRows.length})</p>
-                <div className="space-y-1.5">
-                  {foundRows.map((codes, i) => (
-                    <div key={i} className="flex gap-1.5">
-                      {codes.map((code) => (
-                        <div key={code} className="w-10">
-                          <CardFace code={code} />
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="space-y-2">
               <button
                 disabled={selected.length !== 3}
@@ -195,6 +178,23 @@ export default function GyeolhapSoloPage() {
                 결! (더 이상 없어요)
               </button>
             </div>
+
+            {foundRows.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-neutral-500">이번 라운드에서 찾은 합 ({foundRows.length})</p>
+                <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
+                  {foundRows.map((codes, i) => (
+                    <div key={i} className="flex gap-1.5">
+                      {codes.map((code) => (
+                        <div key={code} className="w-10">
+                          <CardFace code={code} />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <button onClick={startNewGame} className="w-full text-center text-sm text-neutral-500 hover:underline">
               처음부터 다시 시작하기
