@@ -23,8 +23,8 @@ const GAMES: GameEntry[] = [
   {
     slug: "liar-game",
     name: "라이어 게임",
-    description: "준비 중",
-    available: false,
+    description: "제시어를 모르는 라이어를 찾아보세요",
+    available: true,
   },
   {
     slug: "nonogram",

@@ -135,6 +135,83 @@ export type Database = {
         }
         Relationships: []
       }
+      liar_players: {
+        Row: {
+          created_at: string
+          id: string
+          is_host: boolean
+          is_liar: boolean
+          nickname: string
+          room_id: string
+          seat_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_host?: boolean
+          is_liar?: boolean
+          nickname: string
+          room_id: string
+          seat_order: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_host?: boolean
+          is_liar?: boolean
+          nickname?: string
+          room_id?: string
+          seat_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liar_players_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "liar_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      liar_rooms: {
+        Row: {
+          category: string | null
+          code: string
+          created_at: string
+          id: string
+          liar_count: number
+          liar_mode: string
+          liar_word: string | null
+          phase: string
+          show_category_to_liar: boolean
+          word: string | null
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          liar_count?: number
+          liar_mode?: string
+          liar_word?: string | null
+          phase?: string
+          show_category_to_liar?: boolean
+          word?: string | null
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          liar_count?: number
+          liar_mode?: string
+          liar_word?: string | null
+          phase?: string
+          show_category_to_liar?: boolean
+          word?: string | null
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           created_at: string
