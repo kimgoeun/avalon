@@ -1,13 +1,13 @@
 export const SHAPES = ["circle", "triangle", "square"] as const;
 export type Shape = (typeof SHAPES)[number];
 
-export const COLORS = ["red", "yellow", "blue"] as const;
+export const COLORS = ["green", "indigo", "magenta"] as const;
 export type ColorName = (typeof COLORS)[number];
 
 export const COLOR_HEX: Record<ColorName, string> = {
-  red: "#ef4444",
-  yellow: "#eab308",
-  blue: "#3b82f6",
+  green: "#1DB870",
+  indigo: "#4F46E5",
+  magenta: "#E0189B",
 };
 
 export const SHAPE_LABEL: Record<Shape, string> = {
@@ -17,9 +17,9 @@ export const SHAPE_LABEL: Record<Shape, string> = {
 };
 
 export const COLOR_LABEL: Record<ColorName, string> = {
-  red: "빨강",
-  yellow: "노랑",
-  blue: "파랑",
+  green: "초록",
+  indigo: "보라",
+  magenta: "핑크",
 };
 
 export const BOARD_SIZE = 9;
