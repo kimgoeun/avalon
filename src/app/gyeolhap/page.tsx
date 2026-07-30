@@ -120,6 +120,13 @@ export default function GyeolhapHomePage() {
         </form>
 
         <p className="text-center text-sm text-neutral-500">2명이 함께 플레이할 수 있어요</p>
+
+        <Link
+          href="/gyeolhap/solo"
+          className="block text-center text-sm text-neutral-500 hover:underline"
+        >
+          또는 혼자 연습하기 →
+        </Link>
       </div>
     </main>
   );
