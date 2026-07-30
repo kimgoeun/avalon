@@ -89,8 +89,13 @@ export type Database = {
           code: string
           created_at: string
           deck: number[]
+          declared_by: string | null
           id: string
+          pass_streak: number
           phase: string
+          round: number
+          round_starter_id: string | null
+          sub_deadline: string | null
           turn_ends_at: string | null
           turn_player_id: string | null
           winner_id: string | null
@@ -99,8 +104,13 @@ export type Database = {
           code: string
           created_at?: string
           deck?: number[]
+          declared_by?: string | null
           id?: string
+          pass_streak?: number
           phase?: string
+          round?: number
+          round_starter_id?: string | null
+          sub_deadline?: string | null
           turn_ends_at?: string | null
           turn_player_id?: string | null
           winner_id?: string | null
@@ -109,8 +119,13 @@ export type Database = {
           code?: string
           created_at?: string
           deck?: number[]
+          declared_by?: string | null
           id?: string
+          pass_streak?: number
           phase?: string
+          round?: number
+          round_starter_id?: string | null
+          sub_deadline?: string | null
           turn_ends_at?: string | null
           turn_player_id?: string | null
           winner_id?: string | null

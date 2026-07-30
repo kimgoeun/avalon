@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import type { GyeolhapBoardCard, GyeolhapPlayer, GyeolhapRoom } from "@/lib/gyeolhap-actions";
-import { claimCombo, declareDone, endGame, passOnTimeout } from "@/lib/gyeolhap-actions";
+import {
+  declareCombo,
+  declareDone,
+  endGame,
+  expireDeclare,
+  passOnDecisionTimeout,
+  passTurn,
+  submitCombo,
+} from "@/lib/gyeolhap-actions";
+import { MAX_ROUNDS } from "@/lib/gyeolhap";
 import CardFace from "./CardFace";
 
 export default function Board({
@@ -17,38 +26,54 @@ export default function Board({
   me: GyeolhapPlayer;
 }) {
   const [selected, setSelected] = useState<string[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [decidingDone, setDecidingDone] = useState(false);
-  const [ending, setEnding] = useState(false);
-  const [remainingSec, setRemainingSec] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [decisionSec, setDecisionSec] = useState(0);
+  const [declareSec, setDeclareSec] = useState(0);
 
   const isMyTurn = room.turn_player_id === me.id;
+  const inDeclarePhase = room.declared_by !== null;
+  const iAmDeclarer = room.declared_by === me.id;
   const opponent = players.find((p) => p.id !== me.id) ?? null;
   const turnPlayer = players.find((p) => p.id === room.turn_player_id) ?? null;
+  const declarer = players.find((p) => p.id === room.declared_by) ?? null;
 
   useEffect(() => {
     setSelected([]);
-  }, [room.turn_player_id, room.turn_ends_at]);
+  }, [room.turn_player_id, room.declared_by, room.round]);
 
   useEffect(() => {
-    if (!room.turn_ends_at) return;
+    if (inDeclarePhase || !room.turn_ends_at) return;
     const endsAt = new Date(room.turn_ends_at).getTime();
     function tick() {
-      setRemainingSec(Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)));
+      setDecisionSec(Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)));
     }
     tick();
     const interval = setInterval(tick, 250);
     return () => clearInterval(interval);
-  }, [room.turn_ends_at]);
+  }, [room.turn_ends_at, inDeclarePhase]);
 
   useEffect(() => {
-    if (remainingSec > 0) return;
+    if (!inDeclarePhase || !room.sub_deadline) return;
+    const endsAt = new Date(room.sub_deadline).getTime();
+    function tick() {
+      setDeclareSec(Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)));
+    }
+    tick();
+    const interval = setInterval(tick, 250);
+    return () => clearInterval(interval);
+  }, [room.sub_deadline, inDeclarePhase]);
+
+  useEffect(() => {
     if (room.phase !== "playing") return;
-    passOnTimeout(room, players);
-  }, [remainingSec, room, players]);
+    if (inDeclarePhase) {
+      if (declareSec === 0) expireDeclare(room, players);
+    } else {
+      if (decisionSec === 0) passOnDecisionTimeout(room, players);
+    }
+  }, [decisionSec, declareSec, inDeclarePhase, room, players]);
 
   function toggleCard(id: string) {
-    if (!isMyTurn || submitting) return;
+    if (!iAmDeclarer || busy) return;
     setSelected((prev) => {
       if (prev.includes(id)) return prev.filter((c) => c !== id);
       if (prev.length >= 3) return prev;
@@ -56,38 +81,25 @@ export default function Board({
     });
   }
 
-  async function handleClaim() {
-    if (selected.length !== 3) return;
-    setSubmitting(true);
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
     try {
-      await claimCombo(room, boardCards, players, me, selected);
+      await action();
       setSelected([]);
     } finally {
-      setSubmitting(false);
+      setBusy(false);
     }
   }
 
-  async function handleDeclareDone() {
-    setDecidingDone(true);
-    try {
-      await declareDone(room, boardCards, players, me);
-      setSelected([]);
-    } finally {
-      setDecidingDone(false);
-    }
-  }
-
-  async function handleEndGame() {
-    setEnding(true);
-    try {
-      await endGame(room, players);
-    } finally {
-      setEnding(false);
-    }
-  }
+  const roundLabel =
+    room.round > MAX_ROUNDS ? `연장전 ${room.round - MAX_ROUNDS}` : `라운드 ${room.round}/${MAX_ROUNDS}`;
 
   return (
     <div className="w-full max-w-md mx-auto space-y-6 p-6">
+      <div className="text-center">
+        <p className="text-sm text-neutral-500">{roundLabel}</p>
+      </div>
+
       <div className="flex items-center justify-between rounded-xl border border-neutral-200 dark:border-neutral-800 px-4 py-3">
         <div className="text-center flex-1">
           <p className="text-sm text-neutral-500">{me.nickname} (나)</p>
@@ -100,11 +112,21 @@ export default function Board({
       </div>
 
       <div className="text-center space-y-1">
-        <p className="text-lg font-medium">
-          {isMyTurn ? "내 차례예요" : `${turnPlayer?.nickname ?? "상대"}님의 차례`}
-        </p>
-        <p className={`text-3xl font-mono font-bold tabular-nums ${remainingSec <= 10 ? "text-red-500" : ""}`}>
-          0:{String(remainingSec).padStart(2, "0")}
+        {inDeclarePhase ? (
+          <p className="text-lg font-medium">
+            {iAmDeclarer ? "카드 3장을 골라 제출하세요!" : `${declarer?.nickname ?? "상대"}님이 합을 외쳤어요!`}
+          </p>
+        ) : (
+          <p className="text-lg font-medium">
+            {isMyTurn ? "내 차례예요" : `${turnPlayer?.nickname ?? "상대"}님의 차례`}
+          </p>
+        )}
+        <p
+          className={`text-3xl font-mono font-bold tabular-nums ${
+            (inDeclarePhase ? declareSec : decisionSec) <= 3 ? "text-red-500" : ""
+          }`}
+        >
+          0:{String(inDeclarePhase ? declareSec : decisionSec).padStart(2, "0")}
         </p>
       </div>
 
@@ -115,13 +137,13 @@ export default function Board({
             <button
               key={c.id}
               type="button"
-              disabled={!isMyTurn || submitting}
+              disabled={!iAmDeclarer || busy}
               onClick={() => toggleCard(c.id)}
               className={`rounded-2xl transition-all duration-150 ${
                 isSelected
                   ? "-translate-y-1.5 ring-4 ring-indigo-400 shadow-lg shadow-indigo-500/20"
                   : "shadow-sm"
-              } ${isMyTurn && !submitting ? "cursor-pointer hover:-translate-y-1" : "cursor-default opacity-90"}`}
+              } ${iAmDeclarer && !busy ? "cursor-pointer hover:-translate-y-1" : "cursor-default opacity-90"}`}
             >
               <CardFace code={c.card_code} />
             </button>
@@ -129,34 +151,51 @@ export default function Board({
         })}
       </div>
 
-      {isMyTurn ? (
-        <div className="space-y-2">
+      {inDeclarePhase ? (
+        iAmDeclarer && (
           <button
-            disabled={selected.length !== 3 || submitting || decidingDone}
-            onClick={handleClaim}
+            disabled={selected.length !== 3 || busy}
+            onClick={() => run(() => submitCombo(room, boardCards, players, me, selected))}
             className="w-full rounded-xl bg-indigo-600 text-white py-3.5 font-medium shadow-md shadow-indigo-500/25 transition hover:bg-indigo-500 disabled:opacity-40 disabled:shadow-none"
           >
-            {submitting ? "확인하는 중..." : `결합 선언! (${selected.length}/3)`}
+            제출 ({selected.length}/3)
+          </button>
+        )
+      ) : isMyTurn ? (
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            disabled={busy}
+            onClick={() => run(() => declareCombo(room, me))}
+            className="rounded-xl bg-indigo-600 text-white py-3 font-medium shadow-md shadow-indigo-500/25 transition hover:bg-indigo-500 disabled:opacity-40"
+          >
+            합!
           </button>
           <button
-            disabled={submitting || decidingDone}
-            onClick={handleDeclareDone}
-            className="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-40"
+            disabled={busy}
+            onClick={() => run(() => declareDone(room, boardCards, players, me))}
+            className="rounded-xl border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-40"
           >
-            {decidingDone ? "확인하는 중..." : "결! (더 이상 없어요)"}
+            결!
+          </button>
+          <button
+            disabled={busy}
+            onClick={() => run(() => passTurn(room, players, me))}
+            className="rounded-xl border border-neutral-300 dark:border-neutral-700 py-3 font-medium text-neutral-500 disabled:opacity-40"
+          >
+            패스
           </button>
         </div>
       ) : (
-        <p className="text-center text-base text-neutral-500">상대가 결합을 찾는 중이에요...</p>
+        <p className="text-center text-base text-neutral-500">상대의 차례를 기다리는 중...</p>
       )}
 
       {me.is_host && (
         <button
-          disabled={ending}
-          onClick={handleEndGame}
+          disabled={busy}
+          onClick={() => run(() => endGame(room, players))}
           className="w-full text-center text-sm text-neutral-500 hover:underline disabled:opacity-40"
         >
-          {ending ? "종료하는 중..." : "게임 종료하기"}
+          게임 종료하기
         </button>
       )}
     </div>

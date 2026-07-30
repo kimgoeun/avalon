@@ -32,9 +32,15 @@ export const COLOR_LABEL: Record<ColorName, string> = {
 };
 
 export const BOARD_SIZE = 9;
-export const TURN_SECONDS = 30;
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 2;
+
+// 시즌2 데스매치 rules: 10 rounds, a 10s window to declare 합/결 (or pass), a further 5s
+// to name 3 cards once "합!" is declared, and a round ends early after 6 consecutive passes.
+export const MAX_ROUNDS = 10;
+export const DECISION_SECONDS = 10;
+export const DECLARE_SECONDS = 5;
+export const PASS_STREAK_LIMIT = 6;
 
 export interface CardInfo {
   code: number;
