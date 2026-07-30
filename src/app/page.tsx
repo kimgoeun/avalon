@@ -33,7 +33,7 @@ export default function GameHubPage() {
     <main className="flex flex-1 items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-1">
-          <h1 className="text-4xl font-bold tracking-tight">게임타운</h1>
+          <h1 className="text-4xl font-bold tracking-tight">트웬티 게임타운</h1>
           <p className="text-base text-neutral-500">같이 할 게임을 골라주세요</p>
         </div>
 
