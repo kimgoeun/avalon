@@ -119,12 +119,10 @@ export async function claimCombo(
   let currentCodes: number[];
   if (valid) {
     await supabase.from("gyeolhap_board_cards").delete().in("id", selectedCardIds);
-    await supabase
-      .from("gyeolhap_players")
-      .update({ score: player.score + 3 })
-      .eq("id", player.id);
+    await supabase.from("gyeolhap_players").update({ score: player.score + 1 }).eq("id", player.id);
     currentCodes = boardCards.filter((c) => !selectedCardIds.includes(c.id)).map((c) => c.card_code);
   } else {
+    await supabase.from("gyeolhap_players").update({ score: player.score - 1 }).eq("id", player.id);
     currentCodes = boardCards.map((c) => c.card_code);
   }
 
@@ -135,33 +133,64 @@ export async function claimCombo(
     );
   }
 
-  const finalCodes = [...currentCodes, ...addedCodes];
-  const gameOver = remainingDeck.length === 0 && !hasAnyCombo(finalCodes);
+  await supabase
+    .from("gyeolhap_rooms")
+    .update({
+      deck: remainingDeck,
+      turn_player_id: otherPlayer.id,
+      turn_ends_at: turnDeadline(),
+    })
+    .eq("id", room.id);
+}
 
-  if (gameOver) {
-    const playerFinalScore = valid ? player.score + 3 : player.score;
-    const winnerId =
-      playerFinalScore > otherPlayer.score ? player.id : otherPlayer.score > playerFinalScore ? otherPlayer.id : null;
+// "결" — declare that the visible board has no combo left. Correct: +3 and a brand new
+// problem (fresh 27-card shuffle) starts. Wrong: -1, board/deck untouched. Either way
+// the turn passes, matching the "one action per turn" flow.
+export async function declareDone(
+  room: GyeolhapRoom,
+  boardCards: GyeolhapBoardCard[],
+  players: GyeolhapPlayer[],
+  player: GyeolhapPlayer
+) {
+  if (room.phase !== "playing" || room.turn_player_id !== player.id) return;
+  const otherPlayer = players.find((p) => p.id !== player.id);
+  if (!otherPlayer) return;
+
+  const correct = !hasAnyCombo(boardCards.map((c) => c.card_code));
+
+  if (correct) {
+    await supabase.from("gyeolhap_players").update({ score: player.score + 3 }).eq("id", player.id);
+    await supabase.from("gyeolhap_board_cards").delete().eq("room_id", room.id);
+    const deckAll = shuffle(ALL_CARD_CODES);
+    const { addedCodes, remainingDeck } = refillBoard([], deckAll);
+    await supabase.from("gyeolhap_board_cards").insert(
+      addedCodes.map((code, i) => ({ room_id: room.id, position: i, card_code: code }))
+    );
     await supabase
       .from("gyeolhap_rooms")
-      .update({
-        phase: "game_over",
-        deck: remainingDeck,
-        turn_player_id: null,
-        turn_ends_at: null,
-        winner_id: winnerId,
-      })
+      .update({ deck: remainingDeck, turn_player_id: otherPlayer.id, turn_ends_at: turnDeadline() })
       .eq("id", room.id);
   } else {
+    await supabase.from("gyeolhap_players").update({ score: player.score - 1 }).eq("id", player.id);
     await supabase
       .from("gyeolhap_rooms")
-      .update({
-        deck: remainingDeck,
-        turn_player_id: otherPlayer.id,
-        turn_ends_at: turnDeadline(),
-      })
+      .update({ turn_player_id: otherPlayer.id, turn_ends_at: turnDeadline() })
       .eq("id", room.id);
   }
+}
+
+// Host-only: since "결" keeps resetting to a fresh problem instead of the deck ever
+// running out, there's no automatic end condition anymore — the host ends the match
+// whenever they want, and the higher score wins.
+export async function endGame(room: GyeolhapRoom, players: GyeolhapPlayer[]) {
+  if (room.phase !== "playing") return;
+  const [a, b] = players;
+  if (!a || !b) return;
+  const winnerId = a.score === b.score ? null : a.score > b.score ? a.id : b.id;
+  await supabase
+    .from("gyeolhap_rooms")
+    .update({ phase: "game_over", turn_player_id: null, turn_ends_at: null, winner_id: winnerId })
+    .eq("id", room.id);
 }
 
 export async function passOnTimeout(room: GyeolhapRoom, players: GyeolhapPlayer[]) {

@@ -89,9 +89,9 @@ export function hasAnyCombo(codes: number[]): boolean {
 }
 
 /**
- * Tops the board up to BOARD_SIZE, then — since a "결합"-free board is possible even
- * at 9 cards (the max cap-set size for this 3-attribute deck is exactly 9) — keeps
- * dealing 3 more at a time from the deck until a combo exists or the deck runs out.
+ * Tops the board up to BOARD_SIZE from the deck. Deliberately does NOT guarantee a
+ * combo exists on the resulting board — a combo-free board is a legitimate, playable
+ * state here: it's exactly the state a player should call "결" on.
  */
 export function refillBoard(
   currentCodes: number[],
@@ -105,15 +105,6 @@ export function refillBoard(
     const c = remaining.shift()!;
     codes.push(c);
     added.push(c);
-  }
-
-  while (!hasAnyCombo(codes) && remaining.length > 0) {
-    const take = Math.min(3, remaining.length);
-    for (let i = 0; i < take; i++) {
-      const c = remaining.shift()!;
-      codes.push(c);
-      added.push(c);
-    }
   }
 
   return { addedCodes: added, remainingDeck: remaining };

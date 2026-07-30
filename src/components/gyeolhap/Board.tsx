@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { GyeolhapBoardCard, GyeolhapPlayer, GyeolhapRoom } from "@/lib/gyeolhap-actions";
-import { claimCombo, passOnTimeout } from "@/lib/gyeolhap-actions";
+import { claimCombo, declareDone, endGame, passOnTimeout } from "@/lib/gyeolhap-actions";
 import CardFace from "./CardFace";
 
 export default function Board({
@@ -18,6 +18,8 @@ export default function Board({
 }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [decidingDone, setDecidingDone] = useState(false);
+  const [ending, setEnding] = useState(false);
   const [remainingSec, setRemainingSec] = useState(0);
 
   const isMyTurn = room.turn_player_id === me.id;
@@ -65,6 +67,25 @@ export default function Board({
     }
   }
 
+  async function handleDeclareDone() {
+    setDecidingDone(true);
+    try {
+      await declareDone(room, boardCards, players, me);
+      setSelected([]);
+    } finally {
+      setDecidingDone(false);
+    }
+  }
+
+  async function handleEndGame() {
+    setEnding(true);
+    try {
+      await endGame(room, players);
+    } finally {
+      setEnding(false);
+    }
+  }
+
   return (
     <div className="w-full max-w-md mx-auto space-y-6 p-6">
       <div className="flex items-center justify-between rounded-xl border border-neutral-200 dark:border-neutral-800 px-4 py-3">
@@ -109,15 +130,34 @@ export default function Board({
       </div>
 
       {isMyTurn ? (
-        <button
-          disabled={selected.length !== 3 || submitting}
-          onClick={handleClaim}
-          className="w-full rounded-xl bg-indigo-600 text-white py-3.5 font-medium shadow-md shadow-indigo-500/25 transition hover:bg-indigo-500 disabled:opacity-40 disabled:shadow-none"
-        >
-          {submitting ? "확인하는 중..." : `결합 선언! (${selected.length}/3)`}
-        </button>
+        <div className="space-y-2">
+          <button
+            disabled={selected.length !== 3 || submitting || decidingDone}
+            onClick={handleClaim}
+            className="w-full rounded-xl bg-indigo-600 text-white py-3.5 font-medium shadow-md shadow-indigo-500/25 transition hover:bg-indigo-500 disabled:opacity-40 disabled:shadow-none"
+          >
+            {submitting ? "확인하는 중..." : `결합 선언! (${selected.length}/3)`}
+          </button>
+          <button
+            disabled={submitting || decidingDone}
+            onClick={handleDeclareDone}
+            className="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-40"
+          >
+            {decidingDone ? "확인하는 중..." : "결! (더 이상 없어요)"}
+          </button>
+        </div>
       ) : (
         <p className="text-center text-base text-neutral-500">상대가 결합을 찾는 중이에요...</p>
+      )}
+
+      {me.is_host && (
+        <button
+          disabled={ending}
+          onClick={handleEndGame}
+          className="w-full text-center text-sm text-neutral-500 hover:underline disabled:opacity-40"
+        >
+          {ending ? "종료하는 중..." : "게임 종료하기"}
+        </button>
       )}
     </div>
   );
