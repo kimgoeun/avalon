@@ -35,8 +35,8 @@ const GAMES: GameEntry[] = [
   {
     slug: "gyeolhap",
     name: "결합",
-    description: "준비 중",
-    available: false,
+    description: "둘이서 즐기는 결합(SET) 카드 대결",
+    available: true,
   },
 ];
 

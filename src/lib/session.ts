@@ -4,16 +4,16 @@ export interface Session {
   roomCode: string;
 }
 
-function key(roomCode: string) {
-  return `avalon:${roomCode.toUpperCase()}`;
+function key(roomCode: string, game: string = "avalon") {
+  return `${game}:${roomCode.toUpperCase()}`;
 }
 
-export function saveSession(session: Session) {
-  sessionStorage.setItem(key(session.roomCode), JSON.stringify(session));
+export function saveSession(session: Session, game: string = "avalon") {
+  sessionStorage.setItem(key(session.roomCode, game), JSON.stringify(session));
 }
 
-export function loadSession(roomCode: string): Session | null {
-  const raw = sessionStorage.getItem(key(roomCode));
+export function loadSession(roomCode: string, game: string = "avalon"): Session | null {
+  const raw = sessionStorage.getItem(key(roomCode, game));
   if (!raw) return null;
   try {
     return JSON.parse(raw) as Session;
@@ -22,6 +22,6 @@ export function loadSession(roomCode: string): Session | null {
   }
 }
 
-export function clearSession(roomCode: string) {
-  sessionStorage.removeItem(key(roomCode));
+export function clearSession(roomCode: string, game: string = "avalon") {
+  sessionStorage.removeItem(key(roomCode, game));
 }

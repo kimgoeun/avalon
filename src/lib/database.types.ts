@@ -14,6 +14,109 @@ export type Database = {
   }
   public: {
     Tables: {
+      gyeolhap_board_cards: {
+        Row: {
+          card_code: number
+          created_at: string
+          id: string
+          position: number
+          room_id: string
+        }
+        Insert: {
+          card_code: number
+          created_at?: string
+          id?: string
+          position: number
+          room_id: string
+        }
+        Update: {
+          card_code?: number
+          created_at?: string
+          id?: string
+          position?: number
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gyeolhap_board_cards_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "gyeolhap_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gyeolhap_players: {
+        Row: {
+          created_at: string
+          id: string
+          is_host: boolean
+          nickname: string
+          room_id: string
+          score: number
+          seat_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_host?: boolean
+          nickname: string
+          room_id: string
+          score?: number
+          seat_order: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_host?: boolean
+          nickname?: string
+          room_id?: string
+          score?: number
+          seat_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gyeolhap_players_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "gyeolhap_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gyeolhap_rooms: {
+        Row: {
+          code: string
+          created_at: string
+          deck: number[]
+          id: string
+          phase: string
+          turn_ends_at: string | null
+          turn_player_id: string | null
+          winner_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          deck?: number[]
+          id?: string
+          phase?: string
+          turn_ends_at?: string | null
+          turn_player_id?: string | null
+          winner_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          deck?: number[]
+          id?: string
+          phase?: string
+          turn_ends_at?: string | null
+          turn_player_id?: string | null
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           created_at: string
