@@ -2,15 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { GyeolhapBoardCard, GyeolhapPlayer, GyeolhapRoom } from "@/lib/gyeolhap-actions";
-import {
-  declareCombo,
-  declareDone,
-  endGame,
-  expireDeclare,
-  passOnDecisionTimeout,
-  passTurn,
-  submitCombo,
-} from "@/lib/gyeolhap-actions";
+import { declareCombo, declareDone, endGame, passOnDecisionTimeout, passTurn, submitCombo } from "@/lib/gyeolhap-actions";
 import { MAX_ROUNDS } from "@/lib/gyeolhap";
 import CardFace from "./CardFace";
 
@@ -28,7 +20,6 @@ export default function Board({
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [decisionSec, setDecisionSec] = useState(0);
-  const [declareSec, setDeclareSec] = useState(0);
 
   const isMyTurn = room.turn_player_id === me.id;
   const inDeclarePhase = room.declared_by !== null;
@@ -42,7 +33,7 @@ export default function Board({
   }, [room.turn_player_id, room.declared_by, room.round]);
 
   useEffect(() => {
-    if (inDeclarePhase || !room.turn_ends_at) return;
+    if (!room.turn_ends_at) return;
     const endsAt = new Date(room.turn_ends_at).getTime();
     function tick() {
       setDecisionSec(Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)));
@@ -50,27 +41,12 @@ export default function Board({
     tick();
     const interval = setInterval(tick, 250);
     return () => clearInterval(interval);
-  }, [room.turn_ends_at, inDeclarePhase]);
+  }, [room.turn_ends_at]);
 
   useEffect(() => {
-    if (!inDeclarePhase || !room.sub_deadline) return;
-    const endsAt = new Date(room.sub_deadline).getTime();
-    function tick() {
-      setDeclareSec(Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)));
-    }
-    tick();
-    const interval = setInterval(tick, 250);
-    return () => clearInterval(interval);
-  }, [room.sub_deadline, inDeclarePhase]);
-
-  useEffect(() => {
-    if (room.phase !== "playing") return;
-    if (inDeclarePhase) {
-      if (declareSec === 0) expireDeclare(room, players);
-    } else {
-      if (decisionSec === 0) passOnDecisionTimeout(room, players);
-    }
-  }, [decisionSec, declareSec, inDeclarePhase, room, players]);
+    if (room.phase !== "playing" || decisionSec > 0) return;
+    passOnDecisionTimeout(room, players);
+  }, [decisionSec, room, players]);
 
   function toggleCard(id: string) {
     if (!iAmDeclarer || busy) return;
@@ -93,6 +69,8 @@ export default function Board({
 
   const roundLabel =
     room.round > MAX_ROUNDS ? `연장전 ${room.round - MAX_ROUNDS}` : `라운드 ${room.round}/${MAX_ROUNDS}`;
+
+  const foundRows = room.found_sets.map((key) => key.split("-").map(Number));
 
   return (
     <div className="w-full max-w-md mx-auto space-y-6 p-6">
@@ -121,12 +99,8 @@ export default function Board({
             {isMyTurn ? "내 차례예요" : `${turnPlayer?.nickname ?? "상대"}님의 차례`}
           </p>
         )}
-        <p
-          className={`text-3xl font-mono font-bold tabular-nums ${
-            (inDeclarePhase ? declareSec : decisionSec) <= 3 ? "text-red-500" : ""
-          }`}
-        >
-          0:{String(inDeclarePhase ? declareSec : decisionSec).padStart(2, "0")}
+        <p className={`text-3xl font-mono font-bold tabular-nums ${decisionSec <= 3 ? "text-red-500" : ""}`}>
+          0:{String(decisionSec).padStart(2, "0")}
         </p>
       </div>
 
@@ -150,6 +124,23 @@ export default function Board({
           );
         })}
       </div>
+
+      {foundRows.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm text-neutral-500">이번 라운드에서 찾은 합 ({foundRows.length})</p>
+          <div className="space-y-1.5">
+            {foundRows.map((codes, i) => (
+              <div key={i} className="flex gap-1.5">
+                {codes.map((code) => (
+                  <div key={code} className="w-10">
+                    <CardFace code={code} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {inDeclarePhase ? (
         iAmDeclarer && (

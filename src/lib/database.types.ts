@@ -90,6 +90,7 @@ export type Database = {
           created_at: string
           deck: number[]
           declared_by: string | null
+          found_sets: string[]
           id: string
           pass_streak: number
           phase: string
@@ -105,6 +106,7 @@ export type Database = {
           created_at?: string
           deck?: number[]
           declared_by?: string | null
+          found_sets?: string[]
           id?: string
           pass_streak?: number
           phase?: string
@@ -120,6 +122,7 @@ export type Database = {
           created_at?: string
           deck?: number[]
           declared_by?: string | null
+          found_sets?: string[]
           id?: string
           pass_streak?: number
           phase?: string

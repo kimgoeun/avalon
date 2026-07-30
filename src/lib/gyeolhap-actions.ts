@@ -1,16 +1,6 @@
 import { supabase } from "./supabase";
 import type { Tables } from "./database.types";
-import {
-  ALL_CARD_CODES,
-  DECISION_SECONDS,
-  DECLARE_SECONDS,
-  MAX_ROUNDS,
-  PASS_STREAK_LIMIT,
-  hasAnyCombo,
-  isValidCombo,
-  refillBoard,
-  shuffle,
-} from "./gyeolhap";
+import { MAX_ROUNDS, DECISION_SECONDS, PASS_STREAK_LIMIT, comboKey, dealBoard, findAllCombos, isValidCombo } from "./gyeolhap";
 
 export type GyeolhapRoom = Tables<"gyeolhap_rooms">;
 export type GyeolhapPlayer = Tables<"gyeolhap_players">;
@@ -25,10 +15,6 @@ function randomCode(): string {
 
 function decisionDeadline(): string {
   return new Date(Date.now() + DECISION_SECONDS * 1000).toISOString();
-}
-
-function declareDeadline(): string {
-  return new Date(Date.now() + DECLARE_SECONDS * 1000).toISOString();
 }
 
 export async function createRoom(nickname: string) {
@@ -96,11 +82,9 @@ export async function removePlayerFromRoom(player: GyeolhapPlayer) {
 }
 
 export async function startGame(room: GyeolhapRoom, firstPlayerId: string) {
-  const shuffled = shuffle(ALL_CARD_CODES);
-  const { addedCodes, remainingDeck } = refillBoard([], shuffled);
-
+  const board = dealBoard();
   await supabase.from("gyeolhap_board_cards").insert(
-    addedCodes.map((code, i) => ({ room_id: room.id, position: i, card_code: code }))
+    board.map((code, i) => ({ room_id: room.id, position: i, card_code: code }))
   );
   await supabase
     .from("gyeolhap_rooms")
@@ -108,19 +92,18 @@ export async function startGame(room: GyeolhapRoom, firstPlayerId: string) {
       phase: "playing",
       round: 1,
       round_starter_id: firstPlayerId,
-      deck: remainingDeck,
+      found_sets: [],
       pass_streak: 0,
       declared_by: null,
-      sub_deadline: null,
       turn_player_id: firstPlayerId,
       turn_ends_at: decisionDeadline(),
     })
     .eq("id", room.id);
 }
 
-// A round ends via a correct "결" or a 6-pass streak. Within a round the board stays at
-// 9 cards — a successful 합! tops it back up from the round's held-back 18-card deck
-// (never forcing a combo to exist, since a combo-free 9 is a legitimate "결" state).
+// A round's 9 cards are dealt once and never change — a "합" just marks a combo as
+// found (foundSets), it doesn't remove or replace any card. A round ends when every
+// combo among those 9 has been found (a correct "결") or after 6 consecutive passes.
 async function advanceRound(room: GyeolhapRoom, players: GyeolhapPlayer[]) {
   const nextRoundNumber = room.round + 1;
   const [a, b] = players;
@@ -136,44 +119,43 @@ async function advanceRound(room: GyeolhapRoom, players: GyeolhapPlayer[]) {
         turn_player_id: null,
         turn_ends_at: null,
         declared_by: null,
-        sub_deadline: null,
       })
       .eq("id", room.id);
     return;
   }
-  // Tied after MAX_ROUNDS: sudden-death overtime — just keep dealing single rounds
-  // (round keeps climbing past MAX_ROUNDS) until someone is ahead after a completed round.
+  // Tied after MAX_ROUNDS: sudden-death overtime — keep dealing single rounds (round
+  // keeps climbing past MAX_ROUNDS) until someone is ahead after a completed round.
 
   const nextStarter = players.find((p) => p.id !== room.round_starter_id) ?? players[0];
   if (!nextStarter) return;
 
   await supabase.from("gyeolhap_board_cards").delete().eq("room_id", room.id);
-  const shuffled = shuffle(ALL_CARD_CODES);
-  const { addedCodes, remainingDeck } = refillBoard([], shuffled);
+  const board = dealBoard();
   await supabase.from("gyeolhap_board_cards").insert(
-    addedCodes.map((code, i) => ({ room_id: room.id, position: i, card_code: code }))
+    board.map((code, i) => ({ room_id: room.id, position: i, card_code: code }))
   );
   await supabase
     .from("gyeolhap_rooms")
     .update({
       round: nextRoundNumber,
       round_starter_id: nextStarter.id,
-      deck: remainingDeck,
+      found_sets: [],
       pass_streak: 0,
       declared_by: null,
-      sub_deadline: null,
       turn_player_id: nextStarter.id,
       turn_ends_at: decisionDeadline(),
     })
     .eq("id", room.id);
 }
 
-// "합!" — commits the current turn player to naming 3 cards within DECLARE_SECONDS.
+// "합!" — commits the current turn player to picking 3 cards. Shares the same turn
+// timer rather than starting a fresh one (an app-convenience simplification of the
+// broadcast's separate 5s naming window).
 export async function declareCombo(room: GyeolhapRoom, player: GyeolhapPlayer) {
   if (room.phase !== "playing" || room.turn_player_id !== player.id || room.declared_by) return;
   await supabase
     .from("gyeolhap_rooms")
-    .update({ declared_by: player.id, sub_deadline: declareDeadline() })
+    .update({ declared_by: player.id })
     .eq("id", room.id)
     .eq("turn_player_id", player.id)
     .is("declared_by", null);
@@ -194,71 +176,39 @@ export async function submitCombo(
 
   const { data: claimed } = await supabase
     .from("gyeolhap_rooms")
-    .update({ declared_by: null, sub_deadline: null, pass_streak: 0 })
+    .update({ declared_by: null, pass_streak: 0 })
     .eq("id", room.id)
     .eq("declared_by", player.id)
     .select()
     .single();
   if (!claimed) return;
 
-  const valid = isValidCombo(selected.map((c) => c.card_code));
-  const roomUpdate: Partial<GyeolhapRoom> = { turn_player_id: otherPlayer.id, turn_ends_at: decisionDeadline() };
+  const codes = selected.map((c) => c.card_code);
+  const key = comboKey(codes);
+  const success = isValidCombo(codes) && !room.found_sets.includes(key);
 
-  if (valid) {
-    await supabase.from("gyeolhap_board_cards").delete().in("id", selectedCardIds);
+  if (success) {
     await supabase.from("gyeolhap_players").update({ score: player.score + 1 }).eq("id", player.id);
-
-    // Top the board back up to 9 from this round's held-back deck (never forcing a
-    // combo to exist — a combo-free 9 is exactly the state "결" should apply to).
-    const remainingBoard = boardCards.filter((c) => !selectedCardIds.includes(c.id));
-    const maxPosition = boardCards.reduce((max, c) => Math.max(max, c.position), -1);
-    const { addedCodes, remainingDeck } = refillBoard(
-      remainingBoard.map((c) => c.card_code),
-      room.deck
-    );
-    if (addedCodes.length) {
-      await supabase.from("gyeolhap_board_cards").insert(
-        addedCodes.map((code, i) => ({ room_id: room.id, position: maxPosition + 1 + i, card_code: code }))
-      );
-    }
-    roomUpdate.deck = remainingDeck;
+    await supabase
+      .from("gyeolhap_rooms")
+      .update({
+        found_sets: [...room.found_sets, key],
+        turn_player_id: otherPlayer.id,
+        turn_ends_at: decisionDeadline(),
+      })
+      .eq("id", room.id);
   } else {
     await supabase.from("gyeolhap_players").update({ score: player.score - 1 }).eq("id", player.id);
+    await supabase
+      .from("gyeolhap_rooms")
+      .update({ turn_player_id: otherPlayer.id, turn_ends_at: decisionDeadline() })
+      .eq("id", room.id);
   }
-
-  await supabase.from("gyeolhap_rooms").update(roomUpdate).eq("id", room.id);
 }
 
-// The DECLARE_SECONDS window after "합!" ran out without a submission — treated as a
-// failed combo attempt (-1), same as a wrong guess.
-export async function expireDeclare(room: GyeolhapRoom, players: GyeolhapPlayer[]) {
-  if (room.phase !== "playing" || !room.declared_by || !room.sub_deadline) return;
-  if (new Date(room.sub_deadline).getTime() > Date.now()) return;
-
-  const declarerId = room.declared_by;
-  const { data: claimed } = await supabase
-    .from("gyeolhap_rooms")
-    .update({ declared_by: null, sub_deadline: null, pass_streak: 0 })
-    .eq("id", room.id)
-    .eq("declared_by", declarerId)
-    .eq("sub_deadline", room.sub_deadline)
-    .select()
-    .single();
-  if (!claimed) return;
-
-  const declarer = players.find((p) => p.id === declarerId);
-  const otherPlayer = players.find((p) => p.id !== declarerId);
-  if (!declarer || !otherPlayer) return;
-
-  await supabase.from("gyeolhap_players").update({ score: declarer.score - 1 }).eq("id", declarer.id);
-  await supabase
-    .from("gyeolhap_rooms")
-    .update({ turn_player_id: otherPlayer.id, turn_ends_at: decisionDeadline() })
-    .eq("id", room.id);
-}
-
-// "결!" — declares the visible board has no combo left. Correct: +3 and the round ends
-// immediately (a fresh round deals). Wrong: -1, same round continues, turn passes.
+// "결!" — declares every combo among the 9 board cards has already been found.
+// Correct: +3 and the round ends immediately (a fresh round deals). Wrong: -1, same
+// round continues, turn passes.
 export async function declareDone(
   room: GyeolhapRoom,
   boardCards: GyeolhapBoardCard[],
@@ -279,7 +229,9 @@ export async function declareDone(
     .single();
   if (!claimed) return;
 
-  const correct = !hasAnyCombo(boardCards.map((c) => c.card_code));
+  const allCombos = findAllCombos(boardCards.map((c) => c.card_code));
+  const correct = allCombos.every((key) => room.found_sets.includes(key));
+
   if (correct) {
     await supabase.from("gyeolhap_players").update({ score: player.score + 3 }).eq("id", player.id);
     await advanceRound(room, players);
@@ -320,11 +272,36 @@ export async function passTurn(room: GyeolhapRoom, players: GyeolhapPlayer[], pl
     .eq("id", room.id);
 }
 
-// The DECISION_SECONDS window ran out with no 합/결 declared — an automatic pass.
+// The DECISION_SECONDS window ran out. If the player had declared "합!" but never
+// submitted, that's a failed combo attempt (-1); otherwise it's an automatic pass.
 export async function passOnDecisionTimeout(room: GyeolhapRoom, players: GyeolhapPlayer[]) {
-  if (room.phase !== "playing" || room.declared_by) return;
+  if (room.phase !== "playing") return;
   if (!room.turn_ends_at || !room.turn_player_id) return;
   if (new Date(room.turn_ends_at).getTime() > Date.now()) return;
+
+  if (room.declared_by) {
+    const declarerId = room.declared_by;
+    const { data: claimed } = await supabase
+      .from("gyeolhap_rooms")
+      .update({ declared_by: null, pass_streak: 0 })
+      .eq("id", room.id)
+      .eq("declared_by", declarerId)
+      .eq("turn_ends_at", room.turn_ends_at)
+      .select()
+      .single();
+    if (!claimed) return;
+
+    const declarer = players.find((p) => p.id === declarerId);
+    const otherPlayer = players.find((p) => p.id !== declarerId);
+    if (!declarer || !otherPlayer) return;
+
+    await supabase.from("gyeolhap_players").update({ score: declarer.score - 1 }).eq("id", declarer.id);
+    await supabase
+      .from("gyeolhap_rooms")
+      .update({ turn_player_id: otherPlayer.id, turn_ends_at: decisionDeadline() })
+      .eq("id", room.id);
+    return;
+  }
 
   const nextPassStreak = room.pass_streak + 1;
   const { data: claimed } = await supabase
@@ -334,6 +311,7 @@ export async function passOnDecisionTimeout(room: GyeolhapRoom, players: Gyeolha
     .eq("turn_player_id", room.turn_player_id)
     .eq("turn_ends_at", room.turn_ends_at)
     .eq("pass_streak", room.pass_streak)
+    .is("declared_by", null)
     .select()
     .single();
   if (!claimed) return;
@@ -372,9 +350,9 @@ export async function resetRoom(room: GyeolhapRoom) {
       phase: "lobby",
       round: 1,
       round_starter_id: null,
+      found_sets: [],
       pass_streak: 0,
       declared_by: null,
-      sub_deadline: null,
       turn_player_id: null,
       turn_ends_at: null,
       winner_id: null,

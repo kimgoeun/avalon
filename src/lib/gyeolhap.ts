@@ -35,11 +35,10 @@ export const BOARD_SIZE = 9;
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 2;
 
-// 시즌2 데스매치 rules: 10 rounds, a 10s window to declare 합/결 (or pass), a further 5s
-// to name 3 cards once "합!" is declared, and a round ends early after 6 consecutive passes.
+// 시즌2 데스매치 rules: 10 rounds, a single 10s turn timer to declare 합!/결!/pass and
+// (if 합! was declared) name 3 cards, and a round ends early after 6 consecutive passes.
 export const MAX_ROUNDS = 10;
 export const DECISION_SECONDS = 10;
-export const DECLARE_SECONDS = 5;
 export const PASS_STREAK_LIMIT = 6;
 
 export interface CardInfo {
@@ -83,35 +82,26 @@ export function isValidCombo(codes: number[]): boolean {
   return attributeOk(shapeVals) && attributeOk(bgVals) && attributeOk(fgVals);
 }
 
-export function hasAnyCombo(codes: number[]): boolean {
+// A combo's identity for tracking "already found" — order-independent, so the three
+// card codes are sorted before joining into a key.
+export function comboKey(codes: number[]): string {
+  return [...codes].sort((a, b) => a - b).join("-");
+}
+
+// Every valid combo among the given (fixed, unchanging) board codes, as normalized keys.
+export function findAllCombos(codes: number[]): string[] {
+  const keys: string[] = [];
   for (let i = 0; i < codes.length; i++) {
     for (let j = i + 1; j < codes.length; j++) {
       for (let k = j + 1; k < codes.length; k++) {
-        if (isValidCombo([codes[i], codes[j], codes[k]])) return true;
+        const triple = [codes[i], codes[j], codes[k]];
+        if (isValidCombo(triple)) keys.push(comboKey(triple));
       }
     }
   }
-  return false;
+  return keys;
 }
 
-/**
- * Tops the board up to BOARD_SIZE from the deck. Deliberately does NOT guarantee a
- * combo exists on the resulting board — a combo-free board is a legitimate, playable
- * state here: it's exactly the state a player should call "결" on.
- */
-export function refillBoard(
-  currentCodes: number[],
-  deck: number[]
-): { addedCodes: number[]; remainingDeck: number[] } {
-  const codes = [...currentCodes];
-  const remaining = [...deck];
-  const added: number[] = [];
-
-  while (codes.length < BOARD_SIZE && remaining.length > 0) {
-    const c = remaining.shift()!;
-    codes.push(c);
-    added.push(c);
-  }
-
-  return { addedCodes: added, remainingDeck: remaining };
+export function dealBoard(): number[] {
+  return shuffle(ALL_CARD_CODES).slice(0, BOARD_SIZE);
 }

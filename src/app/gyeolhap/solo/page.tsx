@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ALL_CARD_CODES, MAX_ROUNDS, hasAnyCombo, isValidCombo, refillBoard, shuffle } from "@/lib/gyeolhap";
+import { MAX_ROUNDS, comboKey, dealBoard, findAllCombos, isValidCombo } from "@/lib/gyeolhap";
 import CardFace from "@/components/gyeolhap/CardFace";
 
 function formatTime(sec: number) {
@@ -11,7 +11,7 @@ function formatTime(sec: number) {
 
 export default function GyeolhapSoloPage() {
   const [board, setBoard] = useState<number[]>([]);
-  const [deck, setDeck] = useState<number[]>([]);
+  const [foundSets, setFoundSets] = useState<string[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(1);
@@ -21,10 +21,8 @@ export default function GyeolhapSoloPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
 
   function dealRound() {
-    const shuffled = shuffle(ALL_CARD_CODES);
-    const { addedCodes, remainingDeck } = refillBoard([], shuffled);
-    setBoard(addedCodes);
-    setDeck(remainingDeck);
+    setBoard(dealBoard());
+    setFoundSets([]);
     setSelected([]);
   }
 
@@ -65,13 +63,11 @@ export default function GyeolhapSoloPage() {
 
   function submit() {
     if (selected.length !== 3) return;
-    const valid = isValidCombo(selected);
+    const key = comboKey(selected);
+    const success = isValidCombo(selected) && !foundSets.includes(key);
 
-    if (valid) {
-      const remainingBoard = board.filter((c) => !selected.includes(c));
-      const { addedCodes, remainingDeck } = refillBoard(remainingBoard, deck);
-      setBoard([...remainingBoard, ...addedCodes]);
-      setDeck(remainingDeck);
+    if (success) {
+      setFoundSets((prev) => [...prev, key]);
       setScore((s) => s + 1);
       flash("결합 성공! +1");
     } else {
@@ -83,7 +79,10 @@ export default function GyeolhapSoloPage() {
   }
 
   function declareDone() {
-    if (!hasAnyCombo(board)) {
+    const allCombos = findAllCombos(board);
+    const correct = allCombos.every((key) => foundSets.includes(key));
+
+    if (correct) {
       setScore((s) => s + 3);
       flash("결! 정답이에요 +3");
       if (round >= MAX_ROUNDS) {
@@ -98,6 +97,8 @@ export default function GyeolhapSoloPage() {
     }
   }
 
+  const foundRows = foundSets.map((key) => key.split("-").map(Number));
+
   return (
     <main className="flex flex-1 items-center justify-center p-6">
       <Link href="/gyeolhap" className="fixed top-4 left-4 text-sm text-neutral-500 hover:underline">
@@ -107,7 +108,7 @@ export default function GyeolhapSoloPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">혼자하기</h1>
-          <p className="text-base text-neutral-500">더 이상 결합이 없으면 &ldquo;결!&rdquo;을 외치세요</p>
+          <p className="text-base text-neutral-500">9장 안의 합을 다 찾으면 &ldquo;결!&rdquo;을 외치세요</p>
         </div>
 
         <div className="flex items-center justify-between rounded-xl border border-neutral-200 dark:border-neutral-800 px-4 py-3">
@@ -161,6 +162,23 @@ export default function GyeolhapSoloPage() {
                 );
               })}
             </div>
+
+            {foundRows.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-neutral-500">이번 라운드에서 찾은 합 ({foundRows.length})</p>
+                <div className="space-y-1.5">
+                  {foundRows.map((codes, i) => (
+                    <div key={i} className="flex gap-1.5">
+                      {codes.map((code) => (
+                        <div key={code} className="w-10">
+                          <CardFace code={code} />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <button
