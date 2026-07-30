@@ -23,6 +23,11 @@ export default function QuestPlay({
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [advancing, setAdvancing] = useState(false);
+  // Randomize left/right position each time so a glance at someone's screen can't tell
+  // their alignment from a consistent button layout.
+  const [order] = useState<("success" | "fail")[]>(() =>
+    Math.random() < 0.5 ? ["success", "fail"] : ["fail", "success"]
+  );
   const onTeam = quest.team_player_ids.includes(me.id);
   const myCard = cards.find((c) => c.player_id === me.id);
   const allSubmitted = cards.length >= quest.team_size;
@@ -66,31 +71,30 @@ export default function QuestPlay({
             <p className="text-center text-base text-neutral-500">
               카드 제출 완료! 다른 원정대원들을 기다리는 중... ({cards.length}/{quest.team_size})
             </p>
-          ) : evil ? (
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                disabled={submitting}
-                onClick={() => submit(true)}
-                className="rounded-lg bg-blue-600 text-white py-4 font-medium disabled:opacity-50"
-              >
-                성공 카드
-              </button>
-              <button
-                disabled={submitting}
-                onClick={() => submit(false)}
-                className="rounded-lg bg-red-600 text-white py-4 font-medium disabled:opacity-50"
-              >
-                실패 카드
-              </button>
-            </div>
           ) : (
-            <button
-              disabled={submitting}
-              onClick={() => submit(true)}
-              className="w-full rounded-lg bg-blue-600 text-white py-4 font-medium disabled:opacity-50"
-            >
-              성공 카드 제출하기
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              {order.map((kind) =>
+                kind === "success" ? (
+                  <button
+                    key="success"
+                    disabled={submitting}
+                    onClick={() => submit(true)}
+                    className="rounded-lg bg-blue-600 text-white py-4 font-medium disabled:opacity-50"
+                  >
+                    성공 카드
+                  </button>
+                ) : (
+                  <button
+                    key="fail"
+                    disabled={submitting || !evil}
+                    onClick={() => submit(false)}
+                    className="rounded-lg bg-red-600 text-white py-4 font-medium disabled:opacity-50"
+                  >
+                    실패 카드
+                  </button>
+                )
+              )}
+            </div>
           )
         ) : (
           <p className="text-center text-base text-neutral-500">
