@@ -184,7 +184,7 @@ export default function GyeolhapSoloPage() {
               })}
             </div>
 
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 disabled={selected.length !== 3}
                 onClick={submit}
