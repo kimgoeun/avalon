@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MAX_ROUNDS, comboKey, dealBoard, findAllCombos, isValidCombo } from "@/lib/gyeolhap";
 import CardFace from "@/components/gyeolhap/CardFace";
 
@@ -10,6 +11,8 @@ function formatTime(sec: number) {
 }
 
 export default function GyeolhapSoloPage() {
+  const router = useRouter();
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [board, setBoard] = useState<number[]>([]);
   const [foundSets, setFoundSets] = useState<string[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
@@ -41,6 +44,17 @@ export default function GyeolhapSoloPage() {
   useEffect(() => {
     startNewGame();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- start exactly once on mount
+  }, []);
+
+  // Guard against an accidental back-navigation losing progress mid-game.
+  useEffect(() => {
+    window.history.pushState(null, "", window.location.href);
+    function handlePopState() {
+      window.history.pushState(null, "", window.location.href);
+      setShowLeaveConfirm(true);
+    }
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   useEffect(() => {
@@ -223,6 +237,31 @@ export default function GyeolhapSoloPage() {
           </>
         )}
       </div>
+
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
+          <div className="w-full max-w-sm space-y-4 rounded-xl bg-white dark:bg-neutral-900 p-5 shadow-lg">
+            <div className="space-y-1">
+              <p className="text-lg font-medium">나가시겠어요?</p>
+              <p className="text-base text-neutral-500">지금 나가면 진행 중인 기록이 사라져요.</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowLeaveConfirm(false)}
+                className="flex-1 rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 text-base font-medium"
+              >
+                계속 플레이
+              </button>
+              <button
+                onClick={() => router.push("/gyeolhap")}
+                className="flex-1 rounded-lg bg-red-600 text-white py-3 text-base font-medium"
+              >
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
