@@ -14,6 +14,11 @@ export default function Result({
   me: LiarPlayer;
 }) {
   const [busy, setBusy] = useState(false);
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+
+  function reveal(playerId: string) {
+    setRevealed((prev) => new Set(prev).add(playerId));
+  }
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -42,9 +47,18 @@ export default function Result({
               {p.nickname}
               {p.id === me.id && " (나)"}
             </span>
-            <span className={p.is_liar ? "text-red-500 font-medium" : "text-neutral-400"}>
-              {p.is_liar ? "라이어" : "시민"}
-            </span>
+            {revealed.has(p.id) ? (
+              <span className={p.is_liar ? "text-red-500 font-medium" : "text-neutral-400"}>
+                {p.is_liar ? "라이어" : "시민"}
+              </span>
+            ) : (
+              <button
+                onClick={() => reveal(p.id)}
+                className="text-sm px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700"
+              >
+                역할 확인
+              </button>
+            )}
           </li>
         ))}
       </ul>
