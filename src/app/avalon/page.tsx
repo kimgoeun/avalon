@@ -46,10 +46,13 @@ export default function HomePage() {
 
   return (
     <main className="flex flex-1 items-center justify-center p-6">
+      <Link
+        href="/"
+        className="fixed top-4 left-4 text-sm text-neutral-500 hover:underline"
+      >
+        ← 게임 목록
+      </Link>
       <div className="w-full max-w-sm space-y-6">
-        <Link href="/" className="text-sm text-neutral-500 hover:underline">
-          ← 게임 목록
-        </Link>
         <div className="text-center space-y-1">
           <h1 className="text-4xl font-bold tracking-tight">아발론 도우미</h1>
           <p className="text-base text-neutral-500">
