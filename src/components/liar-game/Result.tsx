@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { LiarPlayer, LiarRoom } from "@/lib/liar-game-actions";
-import { markLiarCaught, markWordGuessed, resetRoom } from "@/lib/liar-game-actions";
+import { markLiarCaught, markWordGuessed, resetRoom, revealWordForCheck } from "@/lib/liar-game-actions";
 
 export default function Result({
   room,
@@ -83,6 +83,28 @@ export default function Result({
                 찾았어요
               </button>
             </div>
+          ) : (
+            <p className="text-center text-base text-neutral-500">방장이 결과를 진행 중이에요...</p>
+          )}
+        </div>
+      )}
+
+      {stage === "word_guess" && (
+        <div className="space-y-3">
+          <p className="text-center text-base font-medium">
+            라이어에게 진짜 제시어가 무엇인지 입으로 말해서 맞춰보라고 하세요.
+          </p>
+          <p className="text-center text-sm text-neutral-500">
+            라이어가 답을 말하기 전까지는 제시어를 공개하지 마세요!
+          </p>
+          {me.is_host ? (
+            <button
+              disabled={busy}
+              onClick={() => run(() => revealWordForCheck(room.id))}
+              className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3.5 font-medium disabled:opacity-50"
+            >
+              라이어가 답을 말했어요 - 제시어 확인하기
+            </button>
           ) : (
             <p className="text-center text-base text-neutral-500">방장이 결과를 진행 중이에요...</p>
           )}

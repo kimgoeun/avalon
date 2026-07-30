@@ -147,16 +147,24 @@ export async function advanceToResult(roomId: string) {
 }
 
 // Step 1: was the liar correctly identified? If not, the liar wins outright — no need
-// to check the word. If so, move on to the word-guess step.
+// to check the word. If so, the liar gets a chance to guess the real word out loud —
+// the word itself must stay hidden (from every screen, including the liar's own) until
+// they've actually committed to a guess.
 export async function markLiarCaught(roomId: string, caught: boolean) {
   if (caught) {
-    await supabase.from("liar_rooms").update({ result_stage: "word_check" }).eq("id", roomId);
+    await supabase.from("liar_rooms").update({ result_stage: "word_guess" }).eq("id", roomId);
   } else {
     await supabase.from("liar_rooms").update({ result_stage: "done", winner: "liar" }).eq("id", roomId);
   }
 }
 
-// Step 2 (only reached if the liar was caught): did the liar correctly guess the real word?
+// Step 2: the liar has now said their guess out loud — reveal the real word so
+// everyone can check it.
+export async function revealWordForCheck(roomId: string) {
+  await supabase.from("liar_rooms").update({ result_stage: "word_check" }).eq("id", roomId);
+}
+
+// Step 3: did the liar correctly guess the real word?
 export async function markWordGuessed(roomId: string, guessedCorrectly: boolean) {
   await supabase
     .from("liar_rooms")
