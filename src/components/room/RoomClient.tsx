@@ -21,6 +21,16 @@ export default function RoomClient({ roomCode }: { roomCode: string }) {
   const me = players.find((p) => p.id === session?.playerId);
   const inRoom = Boolean(session && me);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   // Guard against an accidental back-navigation kicking the player out of the room:
   // push a buffer history entry, and if the user hits back, intercept it with a confirm dialog
@@ -116,6 +126,15 @@ export default function RoomClient({ roomCode }: { roomCode: string }) {
 
   return (
     <>
+      <button
+        type="button"
+        aria-label="새로고침"
+        onClick={handleRefresh}
+        disabled={refreshing}
+        className="fixed top-4 right-4 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-neutral-300 bg-white text-neutral-500 shadow-sm dark:border-neutral-700 dark:bg-neutral-900"
+      >
+        <span className={refreshing ? "inline-block animate-spin" : "inline-block"}>↻</span>
+      </button>
       {content}
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
