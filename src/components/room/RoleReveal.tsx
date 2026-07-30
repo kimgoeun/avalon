@@ -40,14 +40,12 @@ export default function RoleReveal({
           (다른 사람에게 보이지 않게 주의하세요)
         </button>
       ) : (
-        <div
-          className={`w-full rounded-2xl p-6 space-y-4 text-white ${
-            evil ? "bg-gradient-to-b from-red-700 to-red-900" : "bg-gradient-to-b from-blue-700 to-blue-900"
-          }`}
-        >
+        <div className="w-full rounded-2xl p-6 space-y-4 text-white bg-gradient-to-b from-neutral-700 to-neutral-900">
           <div className="text-center space-y-1">
-            <p className="text-sm uppercase tracking-widest opacity-80">{evil ? "악당 진영" : "선 진영"}</p>
-            <p className="text-4xl font-bold">{ROLE_LABEL[role]}</p>
+            <p className={`text-sm uppercase tracking-widest ${evil ? "text-red-500" : "text-blue-400"}`}>
+              {evil ? "악당 진영" : "선 진영"}
+            </p>
+            <p className={`text-4xl font-bold ${evil ? "text-red-500" : "text-blue-400"}`}>{ROLE_LABEL[role]}</p>
           </div>
           <p className="text-base opacity-90 text-center">{ROLE_DESCRIPTION[role]}</p>
 

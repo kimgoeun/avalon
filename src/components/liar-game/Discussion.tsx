@@ -23,18 +23,17 @@ export default function Discussion({ room, me }: { room: LiarRoom; me: LiarPlaye
           (다른 사람에게 보이지 않게 주의하세요)
         </button>
       ) : (
-        <div
-          className={`w-full rounded-2xl p-6 space-y-4 text-white ${
-            revealsLiarIdentity
-              ? "bg-gradient-to-b from-red-700 to-red-900"
-              : "bg-gradient-to-b from-blue-700 to-blue-900"
-          }`}
-        >
+        <div className="w-full rounded-2xl p-6 space-y-4 text-white bg-gradient-to-b from-neutral-700 to-neutral-900">
           <div className="text-center space-y-1">
             {revealsLiarIdentity ? (
               <>
                 <p className="text-sm uppercase tracking-widest opacity-80">당신은</p>
-                <p className="text-4xl font-bold">라이어</p>
+                <p className="text-4xl font-bold text-red-500">라이어</p>
+              </>
+            ) : !isFakeWordMode ? (
+              <>
+                <p className="text-sm uppercase tracking-widest opacity-80">당신은</p>
+                <p className="text-4xl font-bold text-blue-400">시민</p>
               </>
             ) : (
               <p className="text-sm uppercase tracking-widest opacity-80">제시어</p>
