@@ -166,11 +166,11 @@ export default function Board({
       {foundRows.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm text-neutral-500">이번 라운드에서 찾은 합 ({foundRows.length})</p>
-          <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
+          <div className="max-h-32 overflow-y-auto flex flex-wrap gap-2 pr-1">
             {foundRows.map((codes, i) => (
-              <div key={i} className="flex gap-1.5">
+              <div key={i} className="flex gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 p-1">
                 {codes.map((code) => (
-                  <div key={code} className="w-10">
+                  <div key={code} className="w-8">
                     <CardFace code={code} />
                   </div>
                 ))}
