@@ -106,7 +106,7 @@ export default function GyeolhapSoloPage() {
   const foundRows = foundSets.map((key) => key.split("-").map(Number));
 
   return (
-    <main className="flex flex-1 items-center justify-center p-6">
+    <main className="flex flex-1 items-start justify-center p-6 pt-16">
       <Link href="/gyeolhap" className="fixed top-4 left-4 text-sm text-neutral-500 hover:underline">
         ← 결합
       </Link>
