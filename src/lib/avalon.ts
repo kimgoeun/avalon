@@ -58,8 +58,8 @@ export interface RoleOptions {
 
 export const DEFAULT_ROLE_OPTIONS: RoleOptions = {
   percival: true,
-  morgana: true,
-  mordred: false,
+  morgana: false,
+  mordred: true,
   oberon: false,
 };
 
