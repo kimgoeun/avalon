@@ -26,6 +26,18 @@ const GAMES: GameEntry[] = [
     description: "준비 중",
     available: false,
   },
+  {
+    slug: "nonogram",
+    name: "네모 로직",
+    description: "준비 중",
+    available: false,
+  },
+  {
+    slug: "gyeolhap",
+    name: "결합",
+    description: "준비 중",
+    available: false,
+  },
 ];
 
 export default function GameHubPage() {
