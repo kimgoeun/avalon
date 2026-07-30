@@ -15,7 +15,12 @@ const REASON_LABEL: Record<string, string> = {
 
 export default function GameOver({ room, players, me }: { room: Room; players: Player[]; me: Player }) {
   const [resetting, setResetting] = useState(false);
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const goodWon = room.winner === "good";
+
+  function reveal(playerId: string) {
+    setRevealed((prev) => new Set(prev).add(playerId));
+  }
 
   async function handleReset() {
     setResetting(true);
@@ -48,9 +53,18 @@ export default function GameOver({ room, players, me }: { room: Room; players: P
                 className="flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
               >
                 <span>{p.nickname}</span>
-                <span className={evil ? "text-red-500" : "text-blue-500"}>
-                  {p.role ? ROLE_LABEL[p.role as Role] : "-"}
-                </span>
+                {revealed.has(p.id) ? (
+                  <span className={evil ? "text-red-500" : "text-blue-500"}>
+                    {p.role ? ROLE_LABEL[p.role as Role] : "-"}
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => reveal(p.id)}
+                    className="text-sm px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700"
+                  >
+                    역할 확인
+                  </button>
+                )}
               </li>
             );
           })}
