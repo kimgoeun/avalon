@@ -11,6 +11,7 @@ function formatTime(sec: number) {
 
 export default function GyeolhapSoloPage() {
   const [board, setBoard] = useState<number[]>([]);
+  const [deck, setDeck] = useState<number[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(1);
@@ -21,8 +22,9 @@ export default function GyeolhapSoloPage() {
 
   function dealRound() {
     const shuffled = shuffle(ALL_CARD_CODES);
-    const { addedCodes } = refillBoard([], shuffled);
+    const { addedCodes, remainingDeck } = refillBoard([], shuffled);
     setBoard(addedCodes);
+    setDeck(remainingDeck);
     setSelected([]);
   }
 
@@ -66,7 +68,10 @@ export default function GyeolhapSoloPage() {
     const valid = isValidCombo(selected);
 
     if (valid) {
-      setBoard((prev) => prev.filter((c) => !selected.includes(c)));
+      const remainingBoard = board.filter((c) => !selected.includes(c));
+      const { addedCodes, remainingDeck } = refillBoard(remainingBoard, deck);
+      setBoard([...remainingBoard, ...addedCodes]);
+      setDeck(remainingDeck);
       setScore((s) => s + 1);
       flash("결합 성공! +1");
     } else {

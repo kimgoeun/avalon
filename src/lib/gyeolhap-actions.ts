@@ -97,7 +97,7 @@ export async function removePlayerFromRoom(player: GyeolhapPlayer) {
 
 export async function startGame(room: GyeolhapRoom, firstPlayerId: string) {
   const shuffled = shuffle(ALL_CARD_CODES);
-  const { addedCodes } = refillBoard([], shuffled);
+  const { addedCodes, remainingDeck } = refillBoard([], shuffled);
 
   await supabase.from("gyeolhap_board_cards").insert(
     addedCodes.map((code, i) => ({ room_id: room.id, position: i, card_code: code }))
@@ -108,6 +108,7 @@ export async function startGame(room: GyeolhapRoom, firstPlayerId: string) {
       phase: "playing",
       round: 1,
       round_starter_id: firstPlayerId,
+      deck: remainingDeck,
       pass_streak: 0,
       declared_by: null,
       sub_deadline: null,
@@ -117,8 +118,9 @@ export async function startGame(room: GyeolhapRoom, firstPlayerId: string) {
     .eq("id", room.id);
 }
 
-// A round only ends via a correct "결" or a 6-pass streak — cards are never replenished
-// mid-round, so it plays out entirely within the 9 cards dealt at round start.
+// A round ends via a correct "결" or a 6-pass streak. Within a round the board stays at
+// 9 cards — a successful 합! tops it back up from the round's held-back 18-card deck
+// (never forcing a combo to exist, since a combo-free 9 is a legitimate "결" state).
 async function advanceRound(room: GyeolhapRoom, players: GyeolhapPlayer[]) {
   const nextRoundNumber = room.round + 1;
   const [a, b] = players;
@@ -147,7 +149,7 @@ async function advanceRound(room: GyeolhapRoom, players: GyeolhapPlayer[]) {
 
   await supabase.from("gyeolhap_board_cards").delete().eq("room_id", room.id);
   const shuffled = shuffle(ALL_CARD_CODES);
-  const { addedCodes } = refillBoard([], shuffled);
+  const { addedCodes, remainingDeck } = refillBoard([], shuffled);
   await supabase.from("gyeolhap_board_cards").insert(
     addedCodes.map((code, i) => ({ room_id: room.id, position: i, card_code: code }))
   );
@@ -156,6 +158,7 @@ async function advanceRound(room: GyeolhapRoom, players: GyeolhapPlayer[]) {
     .update({
       round: nextRoundNumber,
       round_starter_id: nextStarter.id,
+      deck: remainingDeck,
       pass_streak: 0,
       declared_by: null,
       sub_deadline: null,
@@ -199,17 +202,31 @@ export async function submitCombo(
   if (!claimed) return;
 
   const valid = isValidCombo(selected.map((c) => c.card_code));
+  const roomUpdate: Partial<GyeolhapRoom> = { turn_player_id: otherPlayer.id, turn_ends_at: decisionDeadline() };
+
   if (valid) {
     await supabase.from("gyeolhap_board_cards").delete().in("id", selectedCardIds);
     await supabase.from("gyeolhap_players").update({ score: player.score + 1 }).eq("id", player.id);
+
+    // Top the board back up to 9 from this round's held-back deck (never forcing a
+    // combo to exist — a combo-free 9 is exactly the state "결" should apply to).
+    const remainingBoard = boardCards.filter((c) => !selectedCardIds.includes(c.id));
+    const maxPosition = boardCards.reduce((max, c) => Math.max(max, c.position), -1);
+    const { addedCodes, remainingDeck } = refillBoard(
+      remainingBoard.map((c) => c.card_code),
+      room.deck
+    );
+    if (addedCodes.length) {
+      await supabase.from("gyeolhap_board_cards").insert(
+        addedCodes.map((code, i) => ({ room_id: room.id, position: maxPosition + 1 + i, card_code: code }))
+      );
+    }
+    roomUpdate.deck = remainingDeck;
   } else {
     await supabase.from("gyeolhap_players").update({ score: player.score - 1 }).eq("id", player.id);
   }
 
-  await supabase
-    .from("gyeolhap_rooms")
-    .update({ turn_player_id: otherPlayer.id, turn_ends_at: decisionDeadline() })
-    .eq("id", room.id);
+  await supabase.from("gyeolhap_rooms").update(roomUpdate).eq("id", room.id);
 }
 
 // The DECLARE_SECONDS window after "합!" ran out without a submission — treated as a
