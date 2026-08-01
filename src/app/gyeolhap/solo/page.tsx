@@ -230,10 +230,6 @@ export default function GyeolhapSoloPage() {
                 </div>
               </div>
             )}
-
-            <button onClick={startNewGame} className="w-full text-center text-sm text-neutral-500 hover:underline">
-              처음부터 다시 시작하기
-            </button>
           </>
         )}
       </div>
