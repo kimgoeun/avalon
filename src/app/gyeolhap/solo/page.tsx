@@ -17,6 +17,7 @@ export default function GyeolhapSoloPage() {
   const [foundSets, setFoundSets] = useState<string[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
   const [score, setScore] = useState(0);
+  const [maxPossible, setMaxPossible] = useState(0);
   const [round, setRound] = useState(1);
   const [finished, setFinished] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
@@ -26,12 +27,18 @@ export default function GyeolhapSoloPage() {
   const scoreFlashTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function dealRound() {
-    setBoard(dealBoard());
+    const newBoard = dealBoard();
+    const combosInBoard = findAllCombos(newBoard).length;
+    setBoard(newBoard);
     setFoundSets([]);
     setSelected([]);
+    // Perfect play on this round's actual board would be every combo in it (+1 each)
+    // plus the final correct 결 (+3) — track that ceiling alongside the real score.
+    setMaxPossible((m) => m + combosInBoard + 3);
   }
 
   function startNewGame() {
+    setMaxPossible(0);
     dealRound();
     setScore(0);
     setRound(1);
@@ -157,6 +164,16 @@ export default function GyeolhapSoloPage() {
             <p className="text-base text-neutral-600 dark:text-neutral-300">
               {MAX_ROUNDS}라운드를 {formatTime(elapsedSec)} 만에 {score}점으로 마쳤어요
             </p>
+            <div className="flex items-center justify-center gap-6 rounded-xl bg-white dark:bg-neutral-900 px-4 py-3">
+              <div className="text-center">
+                <p className="text-sm text-neutral-500">내 점수</p>
+                <p className="text-2xl font-bold">{score}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-neutral-500">이번 판 만점</p>
+                <p className="text-2xl font-bold text-indigo-500">{maxPossible}</p>
+              </div>
+            </div>
             <button
               onClick={startNewGame}
               className="w-full rounded-xl bg-indigo-600 text-white py-3.5 font-medium shadow-md shadow-indigo-500/25 transition hover:bg-indigo-500"
