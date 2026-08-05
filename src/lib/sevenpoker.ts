@@ -2,6 +2,14 @@ export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 7;
 export const STARTING_CHIPS = 100000;
 export const STREETS_PER_HAND = 4; // after 4th, 5th, 6th, 7th card
+
+// room.street (1..4) maps to the betting round after the 4th/5th/6th/7th card, named
+// 첫구/둘째구/셋째구 are dealt with no betting round, so labels start at 네번째구.
+const STREET_LABELS = ["네번째구", "다섯번째구", "여섯번째구", "마지막구"] as const;
+
+export function streetLabel(street: number): string {
+  return STREET_LABELS[street - 1] ?? `${street}구`;
+}
 export const BET_UNIT_OPTIONS = [500, 1000] as const;
 export type BetUnit = (typeof BET_UNIT_OPTIONS)[number];
 

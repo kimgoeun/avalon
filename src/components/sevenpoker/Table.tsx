@@ -10,7 +10,7 @@ import {
   raiseAction,
   setFirstActor,
 } from "@/lib/sevenpoker-actions";
-import { CHIP_STEP, formatWon, maxBetAmount, maxRaiseAmount, STREETS_PER_HAND } from "@/lib/sevenpoker";
+import { CHIP_STEP, formatWon, maxBetAmount, maxRaiseAmount, streetLabel } from "@/lib/sevenpoker";
 import WinnerSelect from "./WinnerSelect";
 import { ChipAmountPicker, ChipStack } from "./Chips";
 
@@ -31,12 +31,12 @@ export default function Table({
     <div className="w-full max-w-md mx-auto space-y-6 p-6">
       <div className="text-center">
         <p className="text-sm text-neutral-500">
-          {room.hand_number}판째 · 스트리트 {room.street}/{STREETS_PER_HAND}
+          {room.hand_number}판째 · {streetLabel(room.street)}
         </p>
       </div>
 
-      <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 px-4 py-4 text-center space-y-1">
-        <p className="text-sm text-neutral-500">테이블 위 판돈</p>
+      <div className="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-4 py-4 text-center space-y-1">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">테이블 위 판돈</p>
         <ChipStack amount={room.pot} size="md" />
       </div>
 
@@ -55,10 +55,10 @@ export default function Table({
                 {p.nickname}
                 {p.id === me.id && " (나)"}
               </span>
-              {p.folded && <span className="text-xs text-neutral-400">폴드</span>}
+              {p.folded && <span className="text-xs text-neutral-400">다이</span>}
               {p.all_in && !p.folded && <span className="text-xs text-red-500">올인</span>}
               {p.round_contrib > 0 && (
-                <span className="text-xs text-neutral-500">이번 스트리트 {formatWon(p.round_contrib)}</span>
+                <span className="text-xs text-neutral-500">이번 구 {formatWon(p.round_contrib)}</span>
               )}
             </span>
             <ChipStack amount={p.chips} size="sm" />
@@ -100,12 +100,12 @@ function FirstActorPicker({
   }
 
   if (!me.is_host) {
-    return <p className="text-center text-base text-neutral-500">방장이 이번 스트리트의 선을 정하는 중이에요...</p>;
+    return <p className="text-center text-base text-neutral-500">방장이 이번 구의 선을 정하는 중이에요...</p>;
   }
 
   return (
     <div className="space-y-2">
-      <p className="text-center text-base font-medium">이번 스트리트의 선(먼저 행동할 사람)을 골라주세요</p>
+      <p className="text-center text-base font-medium">이번 구의 선(먼저 행동할 사람)을 골라주세요</p>
       <div className="grid grid-cols-2 gap-2">
         {active.map((p) => (
           <button
@@ -189,7 +189,7 @@ function BettingPanel({
               canCheck ? "" : "col-span-2"
             }`}
           >
-            폴드
+            다이
           </button>
         </div>
       </div>
@@ -216,7 +216,7 @@ function BettingPanel({
           onClick={() => run(() => foldAction(room, players, me))}
           className="rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
         >
-          폴드
+          다이
         </button>
       </div>
 
