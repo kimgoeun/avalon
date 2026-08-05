@@ -136,6 +136,7 @@ function BettingPanel({
   const [busy, setBusy] = useState(false);
   const [betAmount, setBetAmount] = useState(room.bet_unit);
   const [raiseAmount, setRaiseAmount] = useState(room.bet_unit);
+  const [showBetForm, setShowBetForm] = useState(false);
 
   const isMyTurn = turnPlayer?.id === me.id;
   const owed = room.current_bet - me.round_contrib;
@@ -161,6 +162,56 @@ function BettingPanel({
   if (room.current_bet === 0) {
     const cap = Math.max(CHIP_STEP, maxBetAmount(room.pot));
     const clampedBet = Math.min(Math.max(betAmount, CHIP_STEP), cap);
+
+    if (canCheck) {
+      // Nothing's been bet this 구 yet (either I'm first, or everyone before me checked).
+      // Lead with 콜(=체크) at the same size/position a real call would have, so it's
+      // never ambiguous whether the previous player checked — betting is opt-in below.
+      return (
+        <div className="space-y-3">
+          <p className="text-center text-base font-medium">내 차례예요 — 앞사람이 베팅하지 않았어요</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              disabled={busy}
+              onClick={() => run(() => checkAction(room, players, me))}
+              className="rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3 font-medium disabled:opacity-50"
+            >
+              콜
+            </button>
+            <button
+              disabled={busy}
+              onClick={() => run(() => foldAction(room, players, me))}
+              className="rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
+            >
+              다이
+            </button>
+          </div>
+
+          {showBetForm ? (
+            <div className="space-y-2 rounded-lg border border-neutral-200 dark:border-neutral-800 p-3">
+              <p className="text-sm text-neutral-500 text-center">직접 베팅하기 (최대 {formatWon(cap)})</p>
+              <ChipAmountPicker value={clampedBet} onChange={setBetAmount} min={CHIP_STEP} max={cap} />
+              <button
+                disabled={busy}
+                onClick={() => run(() => betAction(room, players, me, clampedBet))}
+                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
+              >
+                {formatWon(clampedBet)} 베팅
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowBetForm(true)}
+              className="w-full text-sm text-neutral-500 py-1 underline"
+            >
+              직접 베팅하기
+            </button>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-3">
         <p className="text-center text-base font-medium">내 차례예요 — 최대 {formatWon(cap)}까지 베팅 가능</p>
@@ -172,26 +223,13 @@ function BettingPanel({
         >
           {formatWon(clampedBet)} 베팅
         </button>
-        <div className="grid grid-cols-2 gap-2">
-          {canCheck && (
-            <button
-              disabled={busy}
-              onClick={() => run(() => checkAction(room, players, me))}
-              className="rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
-            >
-              체크
-            </button>
-          )}
-          <button
-            disabled={busy}
-            onClick={() => run(() => foldAction(room, players, me))}
-            className={`rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50 ${
-              canCheck ? "" : "col-span-2"
-            }`}
-          >
-            다이
-          </button>
-        </div>
+        <button
+          disabled={busy}
+          onClick={() => run(() => foldAction(room, players, me))}
+          className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
+        >
+          다이
+        </button>
       </div>
     );
   }
