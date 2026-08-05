@@ -99,7 +99,7 @@ export default function WinnerSelect({
 
       {anyAllIn ? (
         <p className="text-center text-sm text-amber-500">
-          누군가 올인했어요 — 이번 판이 끝나면 학교까지 정산하고 게임이 종료됩니다.
+          누군가 올인했어요 — 이번 판이 끝나면 학교 없이 팟 전액을 정산하고 게임이 종료됩니다.
         </p>
       ) : (
         <label className="flex items-center gap-2 text-sm">
@@ -108,7 +108,7 @@ export default function WinnerSelect({
             checked={endGameRequested}
             onChange={(e) => setEndGameRequested(e.target.checked)}
           />
-          이번 판을 마지막으로 하고 게임 종료하기 (학교 {formatWon(room.school_pot)}까지 메인팟 승자에게 지급)
+          이번 판을 마지막으로 하고 게임 종료하기 (학교 없이 팟 전액을 메인팟 승자에게 지급)
         </label>
       )}
 

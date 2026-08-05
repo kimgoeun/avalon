@@ -105,11 +105,8 @@ export async function movePlayer(players: SevenPokerPlayer[], playerId: string, 
   await supabase.from("sevenpoker_players").update({ seat_order: b.seat_order }).eq("id", a.id);
 }
 
-// A player short of a full ante just antes whatever they have and is all-in from the
-// start of the hand (excluded from betting, only eligible for pot layers up to their
-// contribution). Since everyone starts with far more than one ante, this only matters
-// for someone deep into a losing streak — and it'll force the final settlement once
-// this hand ends anyway, via the same all-in check every other settlement uses.
+// 학교 is paid exactly once, here, at game start — never charged again. A player short
+// of a full ante just antes whatever they have and is all-in from the start of the hand.
 function anteAmount(chips: number, betUnit: number): number {
   return Math.min(betUnit, chips);
 }
@@ -144,7 +141,6 @@ export async function startGame(room: SevenPokerRoom, players: SevenPokerPlayer[
       bet_unit: betUnit,
       hand_number: 1,
       street: 1,
-      school_pot: 0,
       pot,
       current_bet: 0,
       first_actor_id: null,
@@ -333,12 +329,12 @@ export interface SettleHandParams {
 
 // Settles the whole hand's pot (built up across all four streets), paying out each
 // side-pot layer to its chosen winner(s). The main layer's winner(s) leave this hand's
-// total ante (players × bet_unit) behind — added to the accumulated school_pot — unless
-// this is the game's final settlement (someone went all-in this hand, or the host is
-// ending the game now), in which case there's no skim and the accumulated school_pot is
-// handed to the main layer's winner(s) on top of their share. Otherwise a new hand
-// starts immediately: winnings are paid out, then the next ante is collected from
-// whatever's left (a short stack antes for less and is all-in from the start).
+// total ante (players × bet_unit) behind in the pot — that's 학교, paid only once at
+// game start (see startGame) and never charged again; a non-final hand just leaves that
+// same amount behind to seed the next hand's pot, no new charge to anyone's chips. On
+// the game's final hand (someone went all-in this hand, or the host is ending the game
+// now) there's no skim at all — the winner(s) take the entire pot, since there's no next
+// hand left to seed.
 export async function settleHand({ room, players, layerWinners, endGameRequested }: SettleHandParams) {
   if (room.phase !== "select_winner") return;
 
@@ -362,50 +358,39 @@ export async function settleHand({ room, players, layerWinners, endGameRequested
     for (const [id, amt] of Object.entries(split)) addPayout(id, amt);
   });
 
-  if (isFinal) {
-    const mainWinners = (layerWinners[0] ?? []).filter((id) => layers[0]?.eligiblePlayerIds.includes(id));
-    if (mainWinners.length > 0 && room.school_pot > 0) {
-      const schoolSplit = splitPot(room.school_pot, mainWinners);
-      for (const [id, amt] of Object.entries(schoolSplit)) addPayout(id, amt);
-    }
+  await Promise.all(
+    players.map((p) =>
+      supabase
+        .from("sevenpoker_players")
+        .update({ chips: p.chips + (payouts[p.id] ?? 0) })
+        .eq("id", p.id)
+    )
+  );
 
+  if (isFinal) {
     await Promise.all(
       players.map((p) =>
         supabase
           .from("sevenpoker_players")
-          .update({ chips: p.chips + (payouts[p.id] ?? 0), street_contrib: 0, round_contrib: 0 })
+          .update({ folded: false, all_in: false, street_contrib: 0, round_contrib: 0 })
           .eq("id", p.id)
       )
     );
     await supabase
       .from("sevenpoker_rooms")
-      .update({ phase: "game_over", pot: 0, current_bet: 0, school_pot: 0, pending_actors: [] })
+      .update({ phase: "game_over", pot: 0, current_bet: 0, pending_actors: [] })
       .eq("id", room.id);
     return;
   }
 
-  const mainLayerAmount = layers[0]?.amount ?? 0;
-  const newSchoolPot = room.school_pot + Math.min(anteTotal, mainLayerAmount);
-  const betUnit = room.bet_unit;
-
   await Promise.all(
-    players.map((p) => {
-      const chipsAfterPayout = p.chips + (payouts[p.id] ?? 0);
-      const ante = anteAmount(chipsAfterPayout, betUnit);
-      return supabase
+    players.map((p) =>
+      supabase
         .from("sevenpoker_players")
-        .update({
-          chips: chipsAfterPayout - ante,
-          folded: false,
-          all_in: chipsAfterPayout - ante <= 0,
-          street_contrib: ante,
-          round_contrib: ante,
-        })
-        .eq("id", p.id);
-    })
+        .update({ folded: false, all_in: false, street_contrib: room.bet_unit, round_contrib: room.bet_unit })
+        .eq("id", p.id)
+    )
   );
-
-  const newPot = players.reduce((sum, p) => sum + anteAmount(p.chips + (payouts[p.id] ?? 0), betUnit), 0);
 
   await supabase
     .from("sevenpoker_rooms")
@@ -413,9 +398,8 @@ export async function settleHand({ room, players, layerWinners, endGameRequested
       phase: "select_first_actor",
       hand_number: room.hand_number + 1,
       street: 1,
-      pot: newPot,
+      pot: anteTotal,
       current_bet: 0,
-      school_pot: newSchoolPot,
       first_actor_id: null,
       pending_actors: [],
     })
@@ -437,7 +421,6 @@ export async function resetRoom(room: SevenPokerRoom, players: SevenPokerPlayer[
       phase: "lobby",
       hand_number: 1,
       street: 1,
-      school_pot: 0,
       pot: 0,
       current_bet: 0,
       first_actor_id: null,

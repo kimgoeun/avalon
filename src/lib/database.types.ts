@@ -449,7 +449,6 @@ export type Database = {
           pending_actors: string[]
           phase: string
           pot: number
-          school_pot: number
           street: number
         }
         Insert: {
@@ -463,7 +462,6 @@ export type Database = {
           pending_actors?: string[]
           phase?: string
           pot?: number
-          school_pot?: number
           street?: number
         }
         Update: {
@@ -477,7 +475,6 @@ export type Database = {
           pending_actors?: string[]
           phase?: string
           pot?: number
-          school_pot?: number
           street?: number
         }
         Relationships: []

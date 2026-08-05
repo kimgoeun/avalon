@@ -37,7 +37,7 @@ export default function Table({
 
       <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 px-4 py-4 text-center space-y-1">
         <p className="text-sm text-neutral-500">테이블 위 판돈</p>
-        <ChipStack amount={room.pot + room.school_pot} size="md" />
+        <ChipStack amount={room.pot} size="md" />
       </div>
 
       <ul className="space-y-1">
