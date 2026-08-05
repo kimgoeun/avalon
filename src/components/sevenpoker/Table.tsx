@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SevenPokerPlayer, SevenPokerRoom } from "@/lib/sevenpoker-actions";
 import {
   betAction,
@@ -27,8 +27,35 @@ export default function Table({
   const turnPlayerId = room.pending_actors[0] ?? null;
   const turnPlayer = players.find((p) => p.id === turnPlayerId) ?? null;
 
+  const [toast, setToast] = useState<string | null>(null);
+  // undefined = baseline not established yet; null is a valid baseline (room has no
+  // last_action at all, e.g. before anyone has acted this hand).
+  const seenActionRef = useRef<string | null | undefined>(undefined);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const key = room.last_action_at;
+    if (seenActionRef.current === undefined) {
+      // First render: record whatever's already there as the baseline without toasting
+      // it (it may have happened before this player joined/refreshed).
+      seenActionRef.current = key;
+      return;
+    }
+    if (key === seenActionRef.current || !key) return;
+    seenActionRef.current = key;
+    setToast(room.last_action);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToast(null), 2600);
+  }, [room.last_action_at, room.last_action]);
+
   return (
     <div className="w-full max-w-md mx-auto space-y-6 p-6">
+      {toast && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-4 py-2 text-sm font-medium shadow-lg whitespace-nowrap">
+          {toast}
+        </div>
+      )}
+
       <div className="text-center">
         <p className="text-sm text-neutral-500">
           {room.hand_number}판째 · {streetLabel(room.street)}

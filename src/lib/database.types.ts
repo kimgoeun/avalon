@@ -446,6 +446,8 @@ export type Database = {
           first_actor_id: string | null
           hand_number: number
           id: string
+          last_action: string | null
+          last_action_at: string | null
           pending_actors: string[]
           phase: string
           pot: number
@@ -459,6 +461,8 @@ export type Database = {
           first_actor_id?: string | null
           hand_number?: number
           id?: string
+          last_action?: string | null
+          last_action_at?: string | null
           pending_actors?: string[]
           phase?: string
           pot?: number
@@ -472,6 +476,8 @@ export type Database = {
           first_actor_id?: string | null
           hand_number?: number
           id?: string
+          last_action?: string | null
+          last_action_at?: string | null
           pending_actors?: string[]
           phase?: string
           pot?: number

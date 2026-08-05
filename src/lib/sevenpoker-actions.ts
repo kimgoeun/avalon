@@ -9,6 +9,7 @@ import {
   type BetUnit,
   buildActorQueue,
   computePotLayers,
+  formatWon,
   maxBetAmount,
   maxRaiseAmount,
   splitPot,
@@ -176,6 +177,11 @@ function nextSeatAfter(seats: string[], playerId: string): string {
   return seats[(idx + 1) % seats.length];
 }
 
+// Room fields for the transient "OO님이 OO원 베팅" popup every client shows on change.
+function announce(text: string) {
+  return { last_action: text, last_action_at: new Date().toISOString() };
+}
+
 // Advances the turn queue. When a betting round (street) finishes: if it was the last
 // street (7th card), the hand goes to showdown. Otherwise the pot carries forward
 // untouched into the next street — only each player's per-round contribution resets,
@@ -220,7 +226,7 @@ export async function checkAction(room: SevenPokerRoom, players: SevenPokerPlaye
   if (room.phase !== "betting" || room.pending_actors[0] !== player.id) return;
   if (room.street === 1) return; // rule 6: no check on the first betting street
   if (room.current_bet > player.round_contrib) return; // must call or fold instead
-  await advanceQueueOrCloseRound(room, players, room.pending_actors.slice(1));
+  await advanceQueueOrCloseRound(room, players, room.pending_actors.slice(1), announce(`${player.nickname}님이 체크`));
 }
 
 export async function betAction(room: SevenPokerRoom, players: SevenPokerPlayer[], player: SevenPokerPlayer, amount: number) {
@@ -251,6 +257,7 @@ export async function betAction(room: SevenPokerRoom, players: SevenPokerPlayer[
   await advanceQueueOrCloseRound(room, players, queue, {
     pot: room.pot + amt,
     current_bet: player.round_contrib + amt,
+    ...announce(`${player.nickname}님이 ${formatWon(amt)} 베팅`),
   });
 }
 
@@ -272,7 +279,10 @@ export async function callAction(room: SevenPokerRoom, players: SevenPokerPlayer
     })
     .eq("id", player.id);
 
-  await advanceQueueOrCloseRound(room, players, room.pending_actors.slice(1), { pot: room.pot + amt });
+  await advanceQueueOrCloseRound(room, players, room.pending_actors.slice(1), {
+    pot: room.pot + amt,
+    ...announce(`${player.nickname}님이 ${formatWon(amt)} 콜`),
+  });
 }
 
 export async function raiseAction(room: SevenPokerRoom, players: SevenPokerPlayer[], player: SevenPokerPlayer, raiseAmount: number) {
@@ -303,6 +313,7 @@ export async function raiseAction(room: SevenPokerRoom, players: SevenPokerPlaye
   await advanceQueueOrCloseRound(room, players, queue, {
     pot: room.pot + totalNeeded,
     current_bet: room.current_bet + raiseAmt,
+    ...announce(`${player.nickname}님이 ${formatWon(room.current_bet + raiseAmt)}로 레이즈`),
   });
 }
 
@@ -313,10 +324,13 @@ export async function foldAction(room: SevenPokerRoom, players: SevenPokerPlayer
   const stillActive = players.filter((p) => p.id !== player.id && !p.folded);
   if (stillActive.length <= 1) {
     // Uncontested win — skip any remaining streets and go straight to the hand's payout.
-    await supabase.from("sevenpoker_rooms").update({ phase: "select_winner", pending_actors: [] }).eq("id", room.id);
+    await supabase
+      .from("sevenpoker_rooms")
+      .update({ phase: "select_winner", pending_actors: [], ...announce(`${player.nickname}님이 다이`) })
+      .eq("id", room.id);
     return;
   }
-  await advanceQueueOrCloseRound(room, players, room.pending_actors.slice(1));
+  await advanceQueueOrCloseRound(room, players, room.pending_actors.slice(1), announce(`${player.nickname}님이 다이`));
 }
 
 export interface SettleHandParams {
