@@ -41,8 +41,8 @@ const GAMES: GameEntry[] = [
   {
     slug: "sevenpoker",
     name: "세븐포커 칩 배팅",
-    description: "준비 중",
-    available: false,
+    description: "카드는 오프라인으로, 칩만 여기서 관리해요",
+    available: true,
   },
 ];
 

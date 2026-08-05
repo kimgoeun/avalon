@@ -387,6 +387,98 @@ export type Database = {
         }
         Relationships: []
       }
+      sevenpoker_players: {
+        Row: {
+          all_in: boolean
+          chips: number
+          created_at: string
+          folded: boolean
+          id: string
+          is_host: boolean
+          nickname: string
+          room_id: string
+          seat_order: number
+          street_contrib: number
+        }
+        Insert: {
+          all_in?: boolean
+          chips?: number
+          created_at?: string
+          folded?: boolean
+          id?: string
+          is_host?: boolean
+          nickname: string
+          room_id: string
+          seat_order: number
+          street_contrib?: number
+        }
+        Update: {
+          all_in?: boolean
+          chips?: number
+          created_at?: string
+          folded?: boolean
+          id?: string
+          is_host?: boolean
+          nickname?: string
+          room_id?: string
+          seat_order?: number
+          street_contrib?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sevenpoker_players_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "sevenpoker_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sevenpoker_rooms: {
+        Row: {
+          bet_unit: number
+          code: string
+          created_at: string
+          current_bet: number
+          first_actor_id: string | null
+          hand_number: number
+          id: string
+          pending_actors: string[]
+          phase: string
+          pot: number
+          school_pot: number
+          street: number
+        }
+        Insert: {
+          bet_unit?: number
+          code: string
+          created_at?: string
+          current_bet?: number
+          first_actor_id?: string | null
+          hand_number?: number
+          id?: string
+          pending_actors?: string[]
+          phase?: string
+          pot?: number
+          school_pot?: number
+          street?: number
+        }
+        Update: {
+          bet_unit?: number
+          code?: string
+          created_at?: string
+          current_bet?: number
+          first_actor_id?: string | null
+          hand_number?: number
+          id?: string
+          pending_actors?: string[]
+          phase?: string
+          pot?: number
+          school_pot?: number
+          street?: number
+        }
+        Relationships: []
+      }
       votes: {
         Row: {
           approve: boolean
