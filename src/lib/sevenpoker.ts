@@ -57,6 +57,7 @@ export interface StreetContribution {
   playerId: string;
   amount: number;
   folded: boolean;
+  allIn: boolean;
 }
 
 export interface PotLayer {
@@ -65,16 +66,23 @@ export interface PotLayer {
 }
 
 /**
- * Splits a street's total contributions into main-pot/side-pot layers. Money from a
+ * Splits a hand's total contributions into main-pot/side-pot layers. Money from a
  * folded player still counts toward pot amounts, it just never appears in any layer's
- * eligible-winner list. An all-in-for-less contribution creates a level boundary so the
- * excess above it becomes a side pot the all-in player can't win (rule 15).
+ * eligible-winner list — but folding alone never creates a layer boundary, since a fold
+ * doesn't cap anything. Only a genuine bankruptcy (a player going all-in for less than
+ * the table) caps what they can win, so only all-in contribution levels split off a
+ * side pot; everyone else's differing totals (from folding at different streets) just
+ * fold into whichever layer they land in.
  */
 export function computePotLayers(contributions: StreetContribution[]): PotLayer[] {
   const withMoney = contributions.filter((c) => c.amount > 0);
   if (withMoney.length === 0) return [];
 
-  const levels = Array.from(new Set(withMoney.map((c) => c.amount))).sort((a, b) => a - b);
+  const capLevels = Array.from(
+    new Set(withMoney.filter((c) => c.allIn && !c.folded).map((c) => c.amount))
+  ).sort((a, b) => a - b);
+  const maxAmount = Math.max(...withMoney.map((c) => c.amount));
+  const levels = capLevels[capLevels.length - 1] === maxAmount ? capLevels : [...capLevels, maxAmount];
 
   const layers: PotLayer[] = [];
   let prevLevel = 0;

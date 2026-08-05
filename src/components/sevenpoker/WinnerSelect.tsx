@@ -14,7 +14,9 @@ export default function WinnerSelect({
   players: SevenPokerPlayer[];
   me: SevenPokerPlayer;
 }) {
-  const layers = computePotLayers(players.map((p) => ({ playerId: p.id, amount: p.street_contrib, folded: p.folded })));
+  const layers = computePotLayers(
+    players.map((p) => ({ playerId: p.id, amount: p.street_contrib, folded: p.folded, allIn: p.all_in }))
+  );
   const nicknameById = new Map(players.map((p) => [p.id, p.nickname]));
   const anyAllIn = players.some((p) => p.all_in && !p.folded);
 

@@ -338,7 +338,7 @@ export interface SettleHandParams {
 export async function settleHand({ room, players, layerWinners, endGameRequested }: SettleHandParams) {
   if (room.phase !== "select_winner") return;
 
-  const contributions = players.map((p) => ({ playerId: p.id, amount: p.street_contrib, folded: p.folded }));
+  const contributions = players.map((p) => ({ playerId: p.id, amount: p.street_contrib, folded: p.folded, allIn: p.all_in }));
   const layers = computePotLayers(contributions);
   const anyAllIn = players.some((p) => p.all_in && !p.folded);
   const isFinal = anyAllIn || endGameRequested;
