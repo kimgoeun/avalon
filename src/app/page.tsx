@@ -38,6 +38,12 @@ const GAMES: GameEntry[] = [
     description: "둘이서 즐기는 결합(SET) 카드 대결",
     available: true,
   },
+  {
+    slug: "sevenpoker",
+    name: "세븐포커 칩 배팅",
+    description: "준비 중",
+    available: false,
+  },
 ];
 
 export default function GameHubPage() {
