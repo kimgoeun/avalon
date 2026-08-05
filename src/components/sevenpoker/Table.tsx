@@ -163,7 +163,6 @@ function BettingPanel({
   const [busy, setBusy] = useState(false);
   const [betAmount, setBetAmount] = useState(room.bet_unit);
   const [raiseAmount, setRaiseAmount] = useState(room.bet_unit);
-  const [showBetForm, setShowBetForm] = useState(false);
 
   const isMyTurn = turnPlayer?.id === me.id;
   const owed = room.current_bet - me.round_contrib;
@@ -203,7 +202,7 @@ function BettingPanel({
               onClick={() => run(() => checkAction(room, players, me))}
               className="rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3 font-medium disabled:opacity-50"
             >
-              콜
+              체크 콜
             </button>
             <button
               disabled={busy}
@@ -214,27 +213,17 @@ function BettingPanel({
             </button>
           </div>
 
-          {showBetForm ? (
-            <div className="space-y-2 rounded-lg border border-neutral-200 dark:border-neutral-800 p-3">
-              <p className="text-sm text-neutral-500 text-center">직접 베팅하기 (최대 {formatWon(cap)})</p>
-              <ChipAmountPicker value={clampedBet} onChange={setBetAmount} min={CHIP_STEP} max={cap} />
-              <button
-                disabled={busy}
-                onClick={() => run(() => betAction(room, players, me, clampedBet))}
-                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
-              >
-                {formatWon(clampedBet)} 베팅
-              </button>
-            </div>
-          ) : (
+          <div className="space-y-2 rounded-lg border border-neutral-200 dark:border-neutral-800 p-3">
+            <p className="text-sm text-neutral-500 text-center">직접 베팅하기 (최대 {formatWon(cap)})</p>
+            <ChipAmountPicker value={clampedBet} onChange={setBetAmount} min={CHIP_STEP} max={cap} />
             <button
-              type="button"
-              onClick={() => setShowBetForm(true)}
-              className="w-full text-sm text-neutral-500 py-1 underline"
+              disabled={busy}
+              onClick={() => run(() => betAction(room, players, me, clampedBet))}
+              className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
             >
-              직접 베팅하기
+              {formatWon(clampedBet)} 베팅
             </button>
-          )}
+          </div>
         </div>
       );
     }
