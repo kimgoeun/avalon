@@ -397,6 +397,7 @@ export type Database = {
           is_host: boolean
           nickname: string
           room_id: string
+          round_contrib: number
           seat_order: number
           street_contrib: number
         }
@@ -409,6 +410,7 @@ export type Database = {
           is_host?: boolean
           nickname: string
           room_id: string
+          round_contrib?: number
           seat_order: number
           street_contrib?: number
         }
@@ -421,6 +423,7 @@ export type Database = {
           is_host?: boolean
           nickname?: string
           room_id?: string
+          round_contrib?: number
           seat_order?: number
           street_contrib?: number
         }

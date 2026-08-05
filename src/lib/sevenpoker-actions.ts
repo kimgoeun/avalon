@@ -105,19 +105,37 @@ export async function movePlayer(players: SevenPokerPlayer[], playerId: string, 
   await supabase.from("sevenpoker_players").update({ seat_order: b.seat_order }).eq("id", a.id);
 }
 
+// A player short of a full ante just antes whatever they have and is all-in from the
+// start of the hand (excluded from betting, only eligible for pot layers up to their
+// contribution). Since everyone starts with far more than one ante, this only matters
+// for someone deep into a losing streak — and it'll force the final settlement once
+// this hand ends anyway, via the same all-in check every other settlement uses.
+function anteAmount(chips: number, betUnit: number): number {
+  return Math.min(betUnit, chips);
+}
+
 export async function startGame(room: SevenPokerRoom, players: SevenPokerPlayer[], betUnit: BetUnit) {
   if (players.length < MIN_PLAYERS || players.length > MAX_PLAYERS) {
     throw new Error(`${MIN_PLAYERS}~${MAX_PLAYERS}명이 필요합니다.`);
   }
 
   await Promise.all(
-    players.map((p) =>
-      supabase
+    players.map((p) => {
+      const ante = anteAmount(p.chips, betUnit);
+      return supabase
         .from("sevenpoker_players")
-        .update({ chips: STARTING_CHIPS - betUnit, folded: false, all_in: false, street_contrib: betUnit })
-        .eq("id", p.id)
-    )
+        .update({
+          chips: p.chips - ante,
+          folded: false,
+          all_in: p.chips - ante <= 0,
+          street_contrib: ante,
+          round_contrib: ante,
+        })
+        .eq("id", p.id);
+    })
   );
+
+  const pot = players.reduce((sum, p) => sum + anteAmount(p.chips, betUnit), 0);
 
   await supabase
     .from("sevenpoker_rooms")
@@ -127,7 +145,7 @@ export async function startGame(room: SevenPokerRoom, players: SevenPokerPlayer[
       hand_number: 1,
       street: 1,
       school_pot: 0,
-      pot: players.length * betUnit,
+      pot,
       current_bet: 0,
       first_actor_id: null,
       pending_actors: [],
@@ -137,7 +155,7 @@ export async function startGame(room: SevenPokerRoom, players: SevenPokerPlayer[
 
 // Host picks who acts first this street (based on the real cards on the table, which
 // the app never sees). If nobody else is left who can actually act (everyone else is
-// folded or all-in), skip straight to picking the street's winner.
+// folded or all-in), skip straight to the hand's showdown.
 export async function setFirstActor(room: SevenPokerRoom, players: SevenPokerPlayer[], firstActorId: string) {
   if (room.phase !== "select_first_actor") return;
   const seats = seatOrderIds(players);
@@ -162,25 +180,51 @@ function nextSeatAfter(seats: string[], playerId: string): string {
   return seats[(idx + 1) % seats.length];
 }
 
-async function advanceQueueOrCloseStreet(room: SevenPokerRoom, remainingQueue: string[], extraRoomFields: Partial<SevenPokerRoom> = {}) {
-  if (remainingQueue.length === 0) {
-    await supabase
-      .from("sevenpoker_rooms")
-      .update({ ...extraRoomFields, phase: "select_winner", pending_actors: [] })
-      .eq("id", room.id);
-  } else {
+// Advances the turn queue. When a betting round (street) finishes: if it was the last
+// street (7th card), the hand goes to showdown. Otherwise the pot carries forward
+// untouched into the next street — only each player's per-round contribution resets,
+// since seven-card stud keeps one continuously growing pot across all four streets.
+async function advanceQueueOrCloseRound(
+  room: SevenPokerRoom,
+  players: SevenPokerPlayer[],
+  remainingQueue: string[],
+  extraRoomFields: Partial<SevenPokerRoom> = {}
+) {
+  if (remainingQueue.length > 0) {
     await supabase
       .from("sevenpoker_rooms")
       .update({ ...extraRoomFields, pending_actors: remainingQueue })
       .eq("id", room.id);
+    return;
   }
+
+  if (room.street >= STREETS_PER_HAND) {
+    await supabase
+      .from("sevenpoker_rooms")
+      .update({ ...extraRoomFields, phase: "select_winner", pending_actors: [] })
+      .eq("id", room.id);
+    return;
+  }
+
+  await Promise.all(players.map((p) => supabase.from("sevenpoker_players").update({ round_contrib: 0 }).eq("id", p.id)));
+  await supabase
+    .from("sevenpoker_rooms")
+    .update({
+      ...extraRoomFields,
+      phase: "select_first_actor",
+      street: room.street + 1,
+      current_bet: 0,
+      first_actor_id: null,
+      pending_actors: [],
+    })
+    .eq("id", room.id);
 }
 
-export async function checkAction(room: SevenPokerRoom, player: SevenPokerPlayer) {
+export async function checkAction(room: SevenPokerRoom, players: SevenPokerPlayer[], player: SevenPokerPlayer) {
   if (room.phase !== "betting" || room.pending_actors[0] !== player.id) return;
   if (room.street === 1) return; // rule 6: no check on the first betting street
-  if (room.current_bet > player.street_contrib) return; // must call or fold instead
-  await advanceQueueOrCloseStreet(room, room.pending_actors.slice(1));
+  if (room.current_bet > player.round_contrib) return; // must call or fold instead
+  await advanceQueueOrCloseRound(room, players, room.pending_actors.slice(1));
 }
 
 export async function betAction(room: SevenPokerRoom, players: SevenPokerPlayer[], player: SevenPokerPlayer, amount: number) {
@@ -194,7 +238,12 @@ export async function betAction(room: SevenPokerRoom, players: SevenPokerPlayer[
 
   await supabase
     .from("sevenpoker_players")
-    .update({ chips: player.chips - amt, street_contrib: player.street_contrib + amt, all_in: isAllIn })
+    .update({
+      chips: player.chips - amt,
+      round_contrib: player.round_contrib + amt,
+      street_contrib: player.street_contrib + amt,
+      all_in: isAllIn,
+    })
     .eq("id", player.id);
 
   // A bet reopens the action: anyone who already checked this street (and is still active)
@@ -203,15 +252,15 @@ export async function betAction(room: SevenPokerRoom, players: SevenPokerPlayer[
   const exclude = new Set([player.id, ...players.filter((p) => p.folded || p.all_in).map((p) => p.id)]);
   const queue = buildActorQueue(seats, nextSeatAfter(seats, player.id), exclude);
 
-  await advanceQueueOrCloseStreet(room, queue, {
+  await advanceQueueOrCloseRound(room, players, queue, {
     pot: room.pot + amt,
-    current_bet: player.street_contrib + amt,
+    current_bet: player.round_contrib + amt,
   });
 }
 
-export async function callAction(room: SevenPokerRoom, player: SevenPokerPlayer) {
+export async function callAction(room: SevenPokerRoom, players: SevenPokerPlayer[], player: SevenPokerPlayer) {
   if (room.phase !== "betting" || room.pending_actors[0] !== player.id) return;
-  const owed = room.current_bet - player.street_contrib;
+  const owed = room.current_bet - player.round_contrib;
   if (owed <= 0) return; // nothing to call
 
   const amt = Math.min(owed, player.chips);
@@ -219,15 +268,20 @@ export async function callAction(room: SevenPokerRoom, player: SevenPokerPlayer)
 
   await supabase
     .from("sevenpoker_players")
-    .update({ chips: player.chips - amt, street_contrib: player.street_contrib + amt, all_in: isAllIn })
+    .update({
+      chips: player.chips - amt,
+      round_contrib: player.round_contrib + amt,
+      street_contrib: player.street_contrib + amt,
+      all_in: isAllIn,
+    })
     .eq("id", player.id);
 
-  await advanceQueueOrCloseStreet(room, room.pending_actors.slice(1), { pot: room.pot + amt });
+  await advanceQueueOrCloseRound(room, players, room.pending_actors.slice(1), { pot: room.pot + amt });
 }
 
 export async function raiseAction(room: SevenPokerRoom, players: SevenPokerPlayer[], player: SevenPokerPlayer, raiseAmount: number) {
   if (room.phase !== "betting" || room.pending_actors[0] !== player.id) return;
-  const owed = room.current_bet - player.street_contrib;
+  const owed = room.current_bet - player.round_contrib;
   if (owed <= 0) return; // nothing to raise over — should bet instead
 
   const potAfterCall = room.pot + owed;
@@ -238,14 +292,19 @@ export async function raiseAction(room: SevenPokerRoom, players: SevenPokerPlaye
 
   await supabase
     .from("sevenpoker_players")
-    .update({ chips: player.chips - totalNeeded, street_contrib: player.street_contrib + totalNeeded })
+    .update({
+      chips: player.chips - totalNeeded,
+      round_contrib: player.round_contrib + totalNeeded,
+      street_contrib: player.street_contrib + totalNeeded,
+      all_in: totalNeeded >= player.chips,
+    })
     .eq("id", player.id);
 
   const seats = seatOrderIds(players);
   const exclude = new Set([player.id, ...players.filter((p) => p.folded || p.all_in).map((p) => p.id)]);
   const queue = buildActorQueue(seats, nextSeatAfter(seats, player.id), exclude);
 
-  await advanceQueueOrCloseStreet(room, queue, {
+  await advanceQueueOrCloseRound(room, players, queue, {
     pot: room.pot + totalNeeded,
     current_bet: room.current_bet + raiseAmt,
   });
@@ -257,13 +316,14 @@ export async function foldAction(room: SevenPokerRoom, players: SevenPokerPlayer
 
   const stillActive = players.filter((p) => p.id !== player.id && !p.folded);
   if (stillActive.length <= 1) {
+    // Uncontested win — skip any remaining streets and go straight to the hand's payout.
     await supabase.from("sevenpoker_rooms").update({ phase: "select_winner", pending_actors: [] }).eq("id", room.id);
     return;
   }
-  await advanceQueueOrCloseStreet(room, room.pending_actors.slice(1));
+  await advanceQueueOrCloseRound(room, players, room.pending_actors.slice(1));
 }
 
-export interface SettleStreetParams {
+export interface SettleHandParams {
   room: SevenPokerRoom;
   players: SevenPokerPlayer[];
   /** One array of winner player ids per pot layer (same order as computePotLayers). */
@@ -271,18 +331,22 @@ export interface SettleStreetParams {
   endGameRequested: boolean;
 }
 
-// Settles the current street: pays out each pot layer to its chosen winner(s). The main
-// layer's winner leaves the 학교 unit behind (added to the accumulated school_pot) unless
-// this is the game's final settlement (someone went all-in this street, or the host is
-// ending the game now) — in that case there's no skim, and the accumulated school_pot is
-// handed to the main layer's winner(s) on top of their share.
-export async function settleStreet({ room, players, layerWinners, endGameRequested }: SettleStreetParams) {
+// Settles the whole hand's pot (built up across all four streets), paying out each
+// side-pot layer to its chosen winner(s). The main layer's winner(s) leave this hand's
+// total ante (players × bet_unit) behind — added to the accumulated school_pot — unless
+// this is the game's final settlement (someone went all-in this hand, or the host is
+// ending the game now), in which case there's no skim and the accumulated school_pot is
+// handed to the main layer's winner(s) on top of their share. Otherwise a new hand
+// starts immediately: winnings are paid out, then the next ante is collected from
+// whatever's left (a short stack antes for less and is all-in from the start).
+export async function settleHand({ room, players, layerWinners, endGameRequested }: SettleHandParams) {
   if (room.phase !== "select_winner") return;
 
   const contributions = players.map((p) => ({ playerId: p.id, amount: p.street_contrib, folded: p.folded }));
   const layers = computePotLayers(contributions);
   const anyAllIn = players.some((p) => p.all_in && !p.folded);
   const isFinal = anyAllIn || endGameRequested;
+  const anteTotal = players.length * room.bet_unit;
 
   const payouts: Record<string, number> = {};
   const addPayout = (id: string, amt: number) => {
@@ -293,35 +357,26 @@ export async function settleStreet({ room, players, layerWinners, endGameRequest
     const winners = (layerWinners[i] ?? []).filter((id) => layer.eligiblePlayerIds.includes(id));
     if (winners.length === 0) return;
     const isMainLayer = i === 0;
-    const skim = isMainLayer && !isFinal ? Math.min(room.bet_unit, layer.amount) : 0;
+    const skim = isMainLayer && !isFinal ? Math.min(anteTotal, layer.amount) : 0;
     const split = splitPot(layer.amount - skim, winners);
     for (const [id, amt] of Object.entries(split)) addPayout(id, amt);
   });
 
-  let newSchoolPot = room.school_pot;
   if (isFinal) {
     const mainWinners = (layerWinners[0] ?? []).filter((id) => layers[0]?.eligiblePlayerIds.includes(id));
     if (mainWinners.length > 0 && room.school_pot > 0) {
       const schoolSplit = splitPot(room.school_pot, mainWinners);
       for (const [id, amt] of Object.entries(schoolSplit)) addPayout(id, amt);
     }
-    newSchoolPot = 0;
-  } else {
-    const mainLayerAmount = layers[0]?.amount ?? 0;
-    newSchoolPot = room.school_pot + Math.min(room.bet_unit, mainLayerAmount);
-  }
 
-  await Promise.all(
-    players.map((p) => {
-      const gain = payouts[p.id] ?? 0;
-      return supabase
-        .from("sevenpoker_players")
-        .update({ chips: p.chips + gain, street_contrib: 0 })
-        .eq("id", p.id);
-    })
-  );
-
-  if (isFinal) {
+    await Promise.all(
+      players.map((p) =>
+        supabase
+          .from("sevenpoker_players")
+          .update({ chips: p.chips + (payouts[p.id] ?? 0), street_contrib: 0, round_contrib: 0 })
+          .eq("id", p.id)
+      )
+    );
     await supabase
       .from("sevenpoker_rooms")
       .update({ phase: "game_over", pot: 0, current_bet: 0, school_pot: 0, pending_actors: [] })
@@ -329,36 +384,42 @@ export async function settleStreet({ room, players, layerWinners, endGameRequest
     return;
   }
 
-  const nextStreet = room.street + 1;
-  if (nextStreet > STREETS_PER_HAND) {
-    await Promise.all(players.map((p) => supabase.from("sevenpoker_players").update({ folded: false, all_in: false }).eq("id", p.id)));
-    await supabase
-      .from("sevenpoker_rooms")
-      .update({
-        phase: "select_first_actor",
-        hand_number: room.hand_number + 1,
-        street: 1,
-        pot: 0,
-        current_bet: 0,
-        school_pot: newSchoolPot,
-        first_actor_id: null,
-        pending_actors: [],
-      })
-      .eq("id", room.id);
-  } else {
-    await supabase
-      .from("sevenpoker_rooms")
-      .update({
-        phase: "select_first_actor",
-        street: nextStreet,
-        pot: 0,
-        current_bet: 0,
-        school_pot: newSchoolPot,
-        first_actor_id: null,
-        pending_actors: [],
-      })
-      .eq("id", room.id);
-  }
+  const mainLayerAmount = layers[0]?.amount ?? 0;
+  const newSchoolPot = room.school_pot + Math.min(anteTotal, mainLayerAmount);
+  const betUnit = room.bet_unit;
+
+  await Promise.all(
+    players.map((p) => {
+      const chipsAfterPayout = p.chips + (payouts[p.id] ?? 0);
+      const ante = anteAmount(chipsAfterPayout, betUnit);
+      return supabase
+        .from("sevenpoker_players")
+        .update({
+          chips: chipsAfterPayout - ante,
+          folded: false,
+          all_in: chipsAfterPayout - ante <= 0,
+          street_contrib: ante,
+          round_contrib: ante,
+        })
+        .eq("id", p.id);
+    })
+  );
+
+  const newPot = players.reduce((sum, p) => sum + anteAmount(p.chips + (payouts[p.id] ?? 0), betUnit), 0);
+
+  await supabase
+    .from("sevenpoker_rooms")
+    .update({
+      phase: "select_first_actor",
+      hand_number: room.hand_number + 1,
+      street: 1,
+      pot: newPot,
+      current_bet: 0,
+      school_pot: newSchoolPot,
+      first_actor_id: null,
+      pending_actors: [],
+    })
+    .eq("id", room.id);
 }
 
 export async function resetRoom(room: SevenPokerRoom, players: SevenPokerPlayer[]) {
@@ -366,7 +427,7 @@ export async function resetRoom(room: SevenPokerRoom, players: SevenPokerPlayer[
     players.map((p) =>
       supabase
         .from("sevenpoker_players")
-        .update({ chips: STARTING_CHIPS, folded: false, all_in: false, street_contrib: 0 })
+        .update({ chips: STARTING_CHIPS, folded: false, all_in: false, street_contrib: 0, round_contrib: 0 })
         .eq("id", p.id)
     )
   );

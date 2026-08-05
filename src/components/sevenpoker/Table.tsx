@@ -57,8 +57,8 @@ export default function Table({
               </span>
               {p.folded && <span className="text-xs text-neutral-400">폴드</span>}
               {p.all_in && !p.folded && <span className="text-xs text-red-500">올인</span>}
-              {p.street_contrib > 0 && (
-                <span className="text-xs text-neutral-500">이번 스트리트 {formatWon(p.street_contrib)}</span>
+              {p.round_contrib > 0 && (
+                <span className="text-xs text-neutral-500">이번 스트리트 {formatWon(p.round_contrib)}</span>
               )}
             </span>
             <ChipStack amount={p.chips} size="sm" />
@@ -138,7 +138,7 @@ function BettingPanel({
   const [raiseAmount, setRaiseAmount] = useState(room.bet_unit);
 
   const isMyTurn = turnPlayer?.id === me.id;
-  const owed = room.current_bet - me.street_contrib;
+  const owed = room.current_bet - me.round_contrib;
   const canCheck = room.street > 1 && owed <= 0;
 
   async function run(action: () => Promise<void>) {
@@ -176,7 +176,7 @@ function BettingPanel({
           {canCheck && (
             <button
               disabled={busy}
-              onClick={() => run(() => checkAction(room, me))}
+              onClick={() => run(() => checkAction(room, players, me))}
               className="rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
             >
               체크
@@ -206,7 +206,7 @@ function BettingPanel({
       <div className="grid grid-cols-2 gap-2">
         <button
           disabled={busy}
-          onClick={() => run(() => callAction(room, me))}
+          onClick={() => run(() => callAction(room, players, me))}
           className="rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3 font-medium disabled:opacity-50"
         >
           콜 ({formatWon(owed)})

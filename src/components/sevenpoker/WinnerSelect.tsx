@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { SevenPokerPlayer, SevenPokerRoom } from "@/lib/sevenpoker-actions";
-import { settleStreet } from "@/lib/sevenpoker-actions";
+import { settleHand } from "@/lib/sevenpoker-actions";
 import { computePotLayers, formatWon } from "@/lib/sevenpoker";
 
 export default function WinnerSelect({
@@ -39,21 +39,22 @@ export default function WinnerSelect({
   async function handleSubmit() {
     setBusy(true);
     try {
-      await settleStreet({ room, players, layerWinners: selections, endGameRequested });
+      await settleHand({ room, players, layerWinners: selections, endGameRequested });
     } finally {
       setBusy(false);
     }
   }
 
   if (!me.is_host) {
-    return <p className="text-center text-base text-neutral-500">방장이 이번 스트리트의 승자를 정하는 중이에요...</p>;
+    return <p className="text-center text-base text-neutral-500">방장이 이번 판의 승자를 정하는 중이에요...</p>;
   }
 
   if (layers.length === 0) {
-    // Nobody contributed this street (everyone checked through) — nothing to award.
+    // Shouldn't normally happen (the ante guarantees every hand has money in it), but
+    // kept as a defensive fallback.
     return (
       <div className="space-y-3">
-        <p className="text-center text-base text-neutral-500">이번 스트리트에는 배팅이 없었어요.</p>
+        <p className="text-center text-base text-neutral-500">이번 판에는 배팅이 없었어요.</p>
         <button
           disabled={busy}
           onClick={() => handleSubmit()}
@@ -70,9 +71,9 @@ export default function WinnerSelect({
       {layers.map((layer, i) => (
         <div key={i} className="space-y-2">
           <p className="text-base font-medium">
-            {layers.length === 1 ? "이번 스트리트 승자" : i === 0 ? "메인팟 승자" : `사이드팟 ${i} 승자`} (
+            {layers.length === 1 ? "이번 판 승자" : i === 0 ? "메인팟 승자" : `사이드팟 ${i} 승자`} (
             {formatWon(layer.amount)}
-            {i === 0 && !isFinal ? ` — 학교 ${formatWon(room.bet_unit)} 남기고 지급` : ""})
+            {i === 0 && !isFinal ? ` — 학교 ${formatWon(players.length * room.bet_unit)} 남기고 지급` : ""})
           </p>
           <div className="grid grid-cols-2 gap-2">
             {layer.eligiblePlayerIds.map((id) => {
@@ -98,7 +99,7 @@ export default function WinnerSelect({
 
       {anyAllIn ? (
         <p className="text-center text-sm text-amber-500">
-          누군가 올인했어요 — 이번 스트리트가 끝나면 학교까지 정산하고 게임이 종료됩니다.
+          누군가 올인했어요 — 이번 판이 끝나면 학교까지 정산하고 게임이 종료됩니다.
         </p>
       ) : (
         <label className="flex items-center gap-2 text-sm">
