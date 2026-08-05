@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { SevenPokerPlayer, SevenPokerRoom } from "@/lib/sevenpoker-actions";
 import { resetRoom } from "@/lib/sevenpoker-actions";
-import { formatWon } from "@/lib/sevenpoker";
+import { ChipStack } from "./Chips";
 
 export default function GameOver({
   room,
@@ -36,7 +36,7 @@ export default function GameOver({
         {ranked.map((p, i) => (
           <li
             key={p.id}
-            className="flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
+            className="flex items-center justify-between gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-base"
           >
             <span className="flex items-center gap-2">
               <span className="text-sm text-neutral-400 w-4">{i + 1}</span>
@@ -45,7 +45,7 @@ export default function GameOver({
                 {p.id === me.id && " (나)"}
               </span>
             </span>
-            <span className="font-bold">{formatWon(p.chips)}</span>
+            <ChipStack amount={p.chips} size="sm" />
           </li>
         ))}
       </ul>

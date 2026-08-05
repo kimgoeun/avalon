@@ -10,8 +10,9 @@ import {
   raiseAction,
   setFirstActor,
 } from "@/lib/sevenpoker-actions";
-import { formatWon, maxBetAmount, maxRaiseAmount, STREETS_PER_HAND } from "@/lib/sevenpoker";
+import { CHIP_STEP, formatWon, maxBetAmount, maxRaiseAmount, STREETS_PER_HAND } from "@/lib/sevenpoker";
 import WinnerSelect from "./WinnerSelect";
+import { ChipAmountPicker, ChipStack } from "./Chips";
 
 export default function Table({
   room,
@@ -34,41 +35,33 @@ export default function Table({
         </p>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-neutral-200 dark:border-neutral-800 px-4 py-3">
-        <div className="text-center flex-1">
-          <p className="text-sm text-neutral-500">팟</p>
-          <p className="text-xl font-bold">{formatWon(room.pot)}</p>
-        </div>
-        <div className="text-center flex-1">
-          <p className="text-sm text-neutral-500">학교</p>
-          <p className="text-xl font-bold text-amber-500">{formatWon(room.school_pot)}</p>
-        </div>
+      <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 px-4 py-4 text-center space-y-1">
+        <p className="text-sm text-neutral-500">테이블 위 판돈</p>
+        <ChipStack amount={room.pot + room.school_pot} size="md" />
       </div>
 
       <ul className="space-y-1">
         {players.map((p) => (
           <li
             key={p.id}
-            className={`flex items-center justify-between rounded-lg border px-4 py-3 text-base ${
+            className={`flex items-center justify-between gap-2 rounded-lg border px-4 py-3 text-base ${
               p.id === turnPlayerId
                 ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30"
                 : "border-neutral-200 dark:border-neutral-800"
             } ${p.folded ? "opacity-50" : ""}`}
           >
-            <span className="flex items-center gap-2">
+            <span className="flex flex-col">
               <span>
                 {p.nickname}
                 {p.id === me.id && " (나)"}
               </span>
               {p.folded && <span className="text-xs text-neutral-400">폴드</span>}
               {p.all_in && !p.folded && <span className="text-xs text-red-500">올인</span>}
-            </span>
-            <span className="text-right">
-              <span className="block font-bold">{formatWon(p.chips)}</span>
               {p.street_contrib > 0 && (
-                <span className="block text-xs text-neutral-500">이번 스트리트 {formatWon(p.street_contrib)}</span>
+                <span className="text-xs text-neutral-500">이번 스트리트 {formatWon(p.street_contrib)}</span>
               )}
             </span>
+            <ChipStack amount={p.chips} size="sm" />
           </li>
         ))}
       </ul>
@@ -166,28 +159,19 @@ function BettingPanel({
   }
 
   if (room.current_bet === 0) {
-    const cap = maxBetAmount(room.pot);
+    const cap = Math.max(CHIP_STEP, maxBetAmount(room.pot));
+    const clampedBet = Math.min(Math.max(betAmount, CHIP_STEP), cap);
     return (
       <div className="space-y-3">
         <p className="text-center text-base font-medium">내 차례예요 — 최대 {formatWon(cap)}까지 베팅 가능</p>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            step={500}
-            min={500}
-            max={cap}
-            value={betAmount}
-            onChange={(e) => setBetAmount(Number(e.target.value))}
-            className="flex-1 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-400"
-          />
-          <button
-            disabled={busy}
-            onClick={() => run(() => betAction(room, players, me, betAmount))}
-            className="rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 px-5 py-3 font-medium disabled:opacity-50"
-          >
-            베팅
-          </button>
-        </div>
+        <ChipAmountPicker value={clampedBet} onChange={setBetAmount} min={CHIP_STEP} max={cap} />
+        <button
+          disabled={busy}
+          onClick={() => run(() => betAction(room, players, me, clampedBet))}
+          className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3 font-medium disabled:opacity-50"
+        >
+          {formatWon(clampedBet)} 베팅
+        </button>
         <div className="grid grid-cols-2 gap-2">
           {canCheck && (
             <button
@@ -237,26 +221,23 @@ function BettingPanel({
       </div>
 
       {canRaise && raiseCap >= 500 && (
-        <div className="space-y-1">
-          <p className="text-sm text-neutral-500">레이즈 (콜 {formatWon(owed)} + 최대 {formatWon(raiseCap)} 추가)</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              step={500}
-              min={500}
-              max={raiseCap}
-              value={raiseAmount}
-              onChange={(e) => setRaiseAmount(Number(e.target.value))}
-              className="flex-1 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-400"
-            />
-            <button
-              disabled={busy}
-              onClick={() => run(() => raiseAction(room, players, me, raiseAmount))}
-              className="rounded-lg bg-indigo-600 text-white px-5 py-3 font-medium disabled:opacity-50"
-            >
-              레이즈
-            </button>
-          </div>
+        <div className="space-y-2">
+          <p className="text-sm text-neutral-500 text-center">레이즈 (콜 {formatWon(owed)}에 추가로 얹을 금액)</p>
+          <ChipAmountPicker
+            value={Math.min(Math.max(raiseAmount, CHIP_STEP), raiseCap)}
+            onChange={setRaiseAmount}
+            min={CHIP_STEP}
+            max={raiseCap}
+          />
+          <button
+            disabled={busy}
+            onClick={() =>
+              run(() => raiseAction(room, players, me, Math.min(Math.max(raiseAmount, CHIP_STEP), raiseCap)))
+            }
+            className="w-full rounded-lg bg-indigo-600 text-white py-3 font-medium disabled:opacity-50"
+          >
+            {formatWon(owed + Math.min(Math.max(raiseAmount, CHIP_STEP), raiseCap))}로 레이즈
+          </button>
         </div>
       )}
     </div>

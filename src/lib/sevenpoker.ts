@@ -23,6 +23,26 @@ export function formatWon(amount: number): string {
   return `${amount.toLocaleString("ko-KR")}원`;
 }
 
+export interface ChipBreakdownEntry {
+  value: number;
+  count: number;
+}
+
+/** Greedily breaks an amount into chip denominations (largest first) for display. */
+export function breakdownIntoChips(amount: number): ChipBreakdownEntry[] {
+  const denominations = [...CHIP_DENOMINATIONS].map((d) => d.value).sort((a, b) => b - a);
+  let remaining = floorToChipStep(amount);
+  const result: ChipBreakdownEntry[] = [];
+  for (const value of denominations) {
+    const count = Math.floor(remaining / value);
+    if (count > 0) {
+      result.push({ value, count });
+      remaining -= count * value;
+    }
+  }
+  return result;
+}
+
 // Rule 8: the most you may bet (when current_bet is 0) is half of the pot at that moment.
 export function maxBetAmount(pot: number): number {
   return Math.max(0, floorToChipStep(pot / 2));
