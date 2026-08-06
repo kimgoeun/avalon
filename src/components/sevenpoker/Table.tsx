@@ -193,23 +193,53 @@ function BettingPanel({
     const cap = Math.max(CHIP_STEP, maxBetAmount(room.pot));
     const clampedBet = Math.min(Math.max(betAmount, CHIP_STEP), cap);
 
-    if (canCheck) {
-      // Nothing's been bet this 구 yet. If I'm first to act it's a plain 체크; if someone
-      // before me already checked, matching that is 체크 콜 — same button, same size/
-      // position a real call would have, so it's never ambiguous what state we're in.
-      // Betting is opt-in below either way.
+    if (canCheck && isFirstToActThisStreet) {
+      // As 선, betting is the meaningful decision (there's nothing to "match" yet), so
+      // it leads — checking and folding are secondary, plain buttons right below it.
       return (
         <div className="space-y-3">
-          <p className="text-center text-base font-medium">
-            {isFirstToActThisStreet ? "내 차례예요 — 선 플레이어예요, 행동하세요" : "내 차례예요 — 앞사람이 체크했어요"}
-          </p>
+          <p className="text-center text-base font-medium">내 차례예요 — 선 플레이어예요, 행동하세요</p>
+          <ChipAmountPicker value={clampedBet} onChange={setBetAmount} min={CHIP_STEP} max={cap} />
+          <button
+            disabled={busy}
+            onClick={() => run(() => betAction(room, players, me, clampedBet))}
+            className="w-full rounded-lg bg-emerald-600 text-white py-3 font-medium disabled:opacity-50"
+          >
+            {formatWon(clampedBet)} 베팅
+          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              disabled={busy}
+              onClick={() => run(() => checkAction(room, players, me))}
+              className="rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
+            >
+              체크
+            </button>
+            <button
+              disabled={busy}
+              onClick={() => run(() => foldAction(room, players, me))}
+              className="rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
+            >
+              다이
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (canCheck) {
+      // Someone before me already checked — matching that is 체크 콜, shown at the same
+      // size/position a real call would have. Betting is opt-in below.
+      return (
+        <div className="space-y-3">
+          <p className="text-center text-base font-medium">내 차례예요 — 앞사람이 체크했어요</p>
           <div className="grid grid-cols-2 gap-2">
             <button
               disabled={busy}
               onClick={() => run(() => checkAction(room, players, me))}
               className="rounded-lg bg-emerald-600 text-white py-3 font-medium disabled:opacity-50"
             >
-              {isFirstToActThisStreet ? "체크" : "체크 콜"}
+              체크 콜
             </button>
             <button
               disabled={busy}
