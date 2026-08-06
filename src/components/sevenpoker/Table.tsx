@@ -194,9 +194,10 @@ function BettingPanel({
     const clampedBet = Math.min(Math.max(betAmount, CHIP_STEP), cap);
 
     if (canCheck) {
-      // Nothing's been bet this 구 yet (either I'm first, or everyone before me checked).
-      // Lead with 콜(=체크) at the same size/position a real call would have, so it's
-      // never ambiguous whether the previous player checked — betting is opt-in below.
+      // Nothing's been bet this 구 yet. If I'm first to act it's a plain 체크; if someone
+      // before me already checked, matching that is 체크 콜 — same button, same size/
+      // position a real call would have, so it's never ambiguous what state we're in.
+      // Betting is opt-in below either way.
       return (
         <div className="space-y-3">
           <p className="text-center text-base font-medium">
@@ -208,7 +209,7 @@ function BettingPanel({
               onClick={() => run(() => checkAction(room, players, me))}
               className="rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3 font-medium disabled:opacity-50"
             >
-              체크 콜
+              {isFirstToActThisStreet ? "체크" : "체크 콜"}
             </button>
             <button
               disabled={busy}
