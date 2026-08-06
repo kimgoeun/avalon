@@ -207,7 +207,7 @@ function BettingPanel({
             <button
               disabled={busy}
               onClick={() => run(() => checkAction(room, players, me))}
-              className="rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3 font-medium disabled:opacity-50"
+              className="rounded-lg bg-emerald-600 text-white py-3 font-medium disabled:opacity-50"
             >
               {isFirstToActThisStreet ? "체크" : "체크 콜"}
             </button>
@@ -268,7 +268,7 @@ function BettingPanel({
         <button
           disabled={busy}
           onClick={() => run(() => callAction(room, players, me))}
-          className="rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3 font-medium disabled:opacity-50"
+          className="rounded-lg bg-emerald-600 text-white py-3 font-medium disabled:opacity-50"
         >
           콜 ({formatWon(owed)})
         </button>
@@ -295,9 +295,9 @@ function BettingPanel({
             onClick={() =>
               run(() => raiseAction(room, players, me, Math.min(Math.max(raiseAmount, CHIP_STEP), raiseCap)))
             }
-            className="w-full rounded-lg bg-indigo-600 text-white py-3 font-medium disabled:opacity-50"
+            className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 py-3 font-medium disabled:opacity-50"
           >
-            {formatWon(owed + Math.min(Math.max(raiseAmount, CHIP_STEP), raiseCap))}로 레이즈
+            (+) 레이즈
           </button>
         </div>
       )}
