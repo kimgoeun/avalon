@@ -68,14 +68,23 @@ export default function WinnerSelect({
     );
   }
 
+  const anteTotal = players.length * room.bet_unit;
+
   return (
     <div className="space-y-5">
-      {layers.map((layer, i) => (
+      {layers.map((layer, i) => {
+        const skim = i === 0 && !isFinal ? Math.min(anteTotal, layer.amount) : 0;
+        const winners = selections[i] ?? [];
+        const winnerNames = winners.map((id) => nicknameById.get(id)).filter(Boolean).join(", ");
+
+        return (
         <div key={i} className="space-y-2">
           <p className="text-base font-medium">
-            {layers.length === 1 ? "이번 판 승자" : i === 0 ? "메인팟 승자" : `사이드팟 ${i} 승자`} (
-            {formatWon(layer.amount)}
-            {i === 0 && !isFinal ? ` — 학교 ${formatWon(players.length * room.bet_unit)} 남기고 지급` : ""})
+            {winners.length > 0
+              ? `${winnerNames}님 승리, ${skim > 0 ? "학교 제외 " : ""}${formatWon(layer.amount - skim)} 지급`
+              : `${layers.length === 1 ? "이번 판 승자" : i === 0 ? "메인팟 승자" : `사이드팟 ${i} 승자`} (${formatWon(layer.amount)}${
+                  skim > 0 ? ` — 학교 ${formatWon(skim)} 남기고 지급` : ""
+                })`}
           </p>
           <div className="grid grid-cols-2 gap-2">
             {layer.eligiblePlayerIds.map((id) => {
@@ -97,7 +106,8 @@ export default function WinnerSelect({
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {anyAllIn ? (
         <p className="text-center text-sm text-amber-500">
