@@ -28,6 +28,7 @@ export default function Table({
   const turnPlayer = players.find((p) => p.id === turnPlayerId) ?? null;
 
   const [toast, setToast] = useState<string | null>(null);
+  const [winnerPreview, setWinnerPreview] = useState<string | null>(null);
   // undefined = baseline not established yet; null is a valid baseline (room has no
   // last_action at all, e.g. before anyone has acted this hand).
   const seenActionRef = useRef<string | null | undefined>(undefined);
@@ -48,6 +49,10 @@ export default function Table({
     toastTimerRef.current = setTimeout(() => setToast(null), 2600);
   }, [room.last_action_at, room.last_action]);
 
+  useEffect(() => {
+    if (room.phase !== "select_winner") setWinnerPreview(null);
+  }, [room.phase]);
+
   return (
     <div className="w-full max-w-md mx-auto space-y-6 p-6">
       {toast && (
@@ -65,6 +70,7 @@ export default function Table({
       <div className="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-4 py-4 text-center space-y-1">
         <p className="text-sm text-neutral-500 dark:text-neutral-400">테이블 위 판돈</p>
         <ChipStack amount={room.pot} size="md" />
+        {winnerPreview && <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{winnerPreview}</p>}
       </div>
 
       {room.phase === "select_first_actor" && (
@@ -75,7 +81,9 @@ export default function Table({
         <BettingPanel room={room} players={players} me={me} turnPlayer={turnPlayer} />
       )}
 
-      {room.phase === "select_winner" && <WinnerSelect room={room} players={players} me={me} />}
+      {room.phase === "select_winner" && (
+        <WinnerSelect room={room} players={players} me={me} onWinnerPreview={setWinnerPreview} />
+      )}
 
       <ul className="space-y-1">
         {players.map((p) => (

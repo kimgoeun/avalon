@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SevenPokerPlayer, SevenPokerRoom } from "@/lib/sevenpoker-actions";
 import { settleHand } from "@/lib/sevenpoker-actions";
 import { computePotLayers, formatWon } from "@/lib/sevenpoker";
@@ -9,10 +9,12 @@ export default function WinnerSelect({
   room,
   players,
   me,
+  onWinnerPreview,
 }: {
   room: SevenPokerRoom;
   players: SevenPokerPlayer[];
   me: SevenPokerPlayer;
+  onWinnerPreview?: (text: string | null) => void;
 }) {
   const layers = computePotLayers(
     players.map((p) => ({ playerId: p.id, amount: p.street_contrib, folded: p.folded, allIn: p.all_in }))
@@ -37,6 +39,24 @@ export default function WinnerSelect({
 
   const isFinal = anyAllIn || endGameRequested;
   const canSubmit = layers.length > 0 && layers.every((_, i) => selections[i].length > 0);
+  const anteTotal = players.length * room.bet_unit;
+
+  // Mirror the main layer's pick up to the table's 판돈 card, so it's obvious there
+  // that the pot is about to move once a winner is chosen.
+  useEffect(() => {
+    if (!onWinnerPreview) return;
+    const mainLayer = layers[0];
+    const winners = selections[0] ?? [];
+    if (!mainLayer || winners.length === 0) {
+      onWinnerPreview(null);
+      return;
+    }
+    const skim = !isFinal ? Math.min(anteTotal, mainLayer.amount) : 0;
+    const nicknameById = new Map(players.map((p) => [p.id, p.nickname]));
+    const winnerNames = winners.map((id) => nicknameById.get(id)).filter(Boolean).join(", ");
+    onWinnerPreview(`${winnerNames}님 승리, ${skim > 0 ? "학교 제외 " : ""}${formatWon(mainLayer.amount - skim)} 지급`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- selections[0] is the real trigger; layers/players are derived from room state each render
+  }, [selections, layers, isFinal, anteTotal, onWinnerPreview]);
 
   async function handleSubmit() {
     setBusy(true);
@@ -67,8 +87,6 @@ export default function WinnerSelect({
       </div>
     );
   }
-
-  const anteTotal = players.length * room.bet_unit;
 
   return (
     <div className="space-y-5">
