@@ -67,6 +67,16 @@ export default function Table({
         <ChipStack amount={room.pot} size="md" />
       </div>
 
+      {room.phase === "select_first_actor" && (
+        <FirstActorPicker room={room} active={active} me={me} />
+      )}
+
+      {room.phase === "betting" && (
+        <BettingPanel room={room} players={players} me={me} turnPlayer={turnPlayer} />
+      )}
+
+      {room.phase === "select_winner" && <WinnerSelect room={room} players={players} me={me} />}
+
       <ul className="space-y-1">
         {players.map((p) => (
           <li
@@ -92,16 +102,6 @@ export default function Table({
           </li>
         ))}
       </ul>
-
-      {room.phase === "select_first_actor" && (
-        <FirstActorPicker room={room} active={active} me={me} />
-      )}
-
-      {room.phase === "betting" && (
-        <BettingPanel room={room} players={players} me={me} turnPlayer={turnPlayer} />
-      )}
-
-      {room.phase === "select_winner" && <WinnerSelect room={room} players={players} me={me} />}
     </div>
   );
 }
