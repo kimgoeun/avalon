@@ -201,7 +201,7 @@ function BettingPanel({
       return (
         <div className="space-y-3">
           <p className="text-center text-base font-medium">
-            {isFirstToActThisStreet ? "내 차례예요 — 선이에요, 체크하거나 베팅하세요" : "내 차례예요 — 앞사람이 체크했어요"}
+            {isFirstToActThisStreet ? "내 차례예요 — 선 플레이어예요, 행동하세요" : "내 차례예요 — 앞사람이 체크했어요"}
           </p>
           <div className="grid grid-cols-2 gap-2">
             <button
