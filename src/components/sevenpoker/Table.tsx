@@ -280,7 +280,7 @@ function BettingPanel({
         <button
           disabled={busy}
           onClick={() => run(() => betAction(room, players, me, clampedBet))}
-          className="w-full rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 py-3 font-medium disabled:opacity-50"
+          className="w-full rounded-lg bg-emerald-600 text-white py-3 font-medium disabled:opacity-50"
         >
           {formatWon(clampedBet)} 베팅
         </button>
