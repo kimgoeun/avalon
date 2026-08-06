@@ -363,6 +363,8 @@ export async function settleHand({ room, players, layerWinners, endGameRequested
     payouts[id] = (payouts[id] ?? 0) + amt;
   };
 
+  let announceFields: Partial<SevenPokerRoom> = {};
+
   layers.forEach((layer, i) => {
     const winners = (layerWinners[i] ?? []).filter((id) => layer.eligiblePlayerIds.includes(id));
     if (winners.length === 0) return;
@@ -370,6 +372,13 @@ export async function settleHand({ room, players, layerWinners, endGameRequested
     const skim = isMainLayer && !isFinal ? Math.min(anteTotal, layer.amount) : 0;
     const split = splitPot(layer.amount - skim, winners);
     for (const [id, amt] of Object.entries(split)) addPayout(id, amt);
+
+    if (isMainLayer) {
+      const winnerNames = winners.map((id) => players.find((p) => p.id === id)?.nickname).filter(Boolean).join(", ");
+      announceFields = announce(
+        `${winnerNames}님 승리, ${skim > 0 ? "학교 제외 " : ""}${formatWon(layer.amount - skim)} 지급`
+      );
+    }
   });
 
   await Promise.all(
@@ -392,7 +401,7 @@ export async function settleHand({ room, players, layerWinners, endGameRequested
     );
     await supabase
       .from("sevenpoker_rooms")
-      .update({ phase: "game_over", pot: 0, current_bet: 0, pending_actors: [] })
+      .update({ phase: "game_over", pot: 0, current_bet: 0, pending_actors: [], ...announceFields })
       .eq("id", room.id);
     return;
   }
@@ -416,6 +425,7 @@ export async function settleHand({ room, players, layerWinners, endGameRequested
       current_bet: 0,
       first_actor_id: null,
       pending_actors: [],
+      ...announceFields,
     })
     .eq("id", room.id);
 }
