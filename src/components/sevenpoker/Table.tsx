@@ -167,6 +167,10 @@ function BettingPanel({
   const isMyTurn = turnPlayer?.id === me.id;
   const owed = room.current_bet - me.round_contrib;
   const canCheck = room.street > 1 && owed <= 0;
+  // The turn queue starts this street with one entry per still-in player and only
+  // shrinks as people act, so if nothing's been removed yet, nobody's acted before me.
+  const activeInQueueCount = players.filter((p) => !p.folded && !p.all_in).length;
+  const isFirstToActThisStreet = room.pending_actors.length === activeInQueueCount;
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -195,7 +199,9 @@ function BettingPanel({
       // never ambiguous whether the previous player checked — betting is opt-in below.
       return (
         <div className="space-y-3">
-          <p className="text-center text-base font-medium">내 차례예요 — 앞사람이 베팅하지 않았어요</p>
+          <p className="text-center text-base font-medium">
+            {isFirstToActThisStreet ? "내 차례예요 — 선이에요, 체크하거나 베팅하세요" : "내 차례예요 — 앞사람이 체크했어요"}
+          </p>
           <div className="grid grid-cols-2 gap-2">
             <button
               disabled={busy}
