@@ -67,8 +67,8 @@ export default function WinnerSelect({
     }
   }
 
-  if (!me.is_host) {
-    return <p className="text-center text-base text-neutral-500">방장이 이번 판의 승자를 정하는 중이에요...</p>;
+  if (me.id !== room.dealer_id) {
+    return <p className="text-center text-base text-neutral-500">딜러가 이번 판의 승자를 정하는 중이에요...</p>;
   }
 
   if (layers.length === 0) {

@@ -112,7 +112,7 @@ function anteAmount(chips: number, betUnit: number): number {
   return Math.min(betUnit, chips);
 }
 
-export async function startGame(room: SevenPokerRoom, players: SevenPokerPlayer[], betUnit: BetUnit) {
+export async function startGame(room: SevenPokerRoom, players: SevenPokerPlayer[], betUnit: BetUnit, dealerId: string) {
   if (players.length < MIN_PLAYERS || players.length > MAX_PLAYERS) {
     throw new Error(`${MIN_PLAYERS}~${MAX_PLAYERS}명이 필요합니다.`);
   }
@@ -146,11 +146,12 @@ export async function startGame(room: SevenPokerRoom, players: SevenPokerPlayer[
       current_bet: 0,
       first_actor_id: null,
       pending_actors: [],
+      dealer_id: dealerId,
     })
     .eq("id", room.id);
 }
 
-// Host picks who acts first this street (based on the real cards on the table, which
+// 딜러 picks who acts first this street (based on the real cards on the table, which
 // the app never sees). If nobody else is left who can actually act (everyone else is
 // folded or all-in), skip straight to the hand's showdown.
 export async function setFirstActor(room: SevenPokerRoom, players: SevenPokerPlayer[], firstActorId: string) {
@@ -364,6 +365,7 @@ export async function settleHand({ room, players, layerWinners, endGameRequested
   };
 
   let announceFields: Partial<SevenPokerRoom> = {};
+  let nextDealerId: string | null = null;
 
   layers.forEach((layer, i) => {
     const winners = (layerWinners[i] ?? []).filter((id) => layer.eligiblePlayerIds.includes(id));
@@ -378,6 +380,8 @@ export async function settleHand({ room, players, layerWinners, endGameRequested
       announceFields = announce(
         `${winnerNames}님 승리, ${skim > 0 ? "학교 제외 " : ""}${formatWon(layer.amount - skim)} 지급`
       );
+      // The hand's winner runs the next hand as 딜러 (a tie just picks the first).
+      nextDealerId = winners[0];
     }
   });
 
@@ -425,6 +429,7 @@ export async function settleHand({ room, players, layerWinners, endGameRequested
       current_bet: 0,
       first_actor_id: null,
       pending_actors: [],
+      dealer_id: nextDealerId ?? room.dealer_id,
       ...announceFields,
     })
     .eq("id", room.id);
@@ -449,6 +454,7 @@ export async function resetRoom(room: SevenPokerRoom, players: SevenPokerPlayer[
       current_bet: 0,
       first_actor_id: null,
       pending_actors: [],
+      dealer_id: null,
     })
     .eq("id", room.id);
 }

@@ -443,6 +443,7 @@ export type Database = {
           code: string
           created_at: string
           current_bet: number
+          dealer_id: string | null
           first_actor_id: string | null
           hand_number: number
           id: string
@@ -458,6 +459,7 @@ export type Database = {
           code: string
           created_at?: string
           current_bet?: number
+          dealer_id?: string | null
           first_actor_id?: string | null
           hand_number?: number
           id?: string
@@ -473,6 +475,7 @@ export type Database = {
           code?: string
           created_at?: string
           current_bet?: number
+          dealer_id?: string | null
           first_actor_id?: string | null
           hand_number?: number
           id?: string

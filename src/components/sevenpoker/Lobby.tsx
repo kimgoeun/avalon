@@ -15,17 +15,19 @@ export default function Lobby({
   isHost: boolean;
 }) {
   const [betUnit, setBetUnit] = useState<BetUnit>(500);
+  const [dealerId, setDealerId] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const count = players.length;
-  const canStart = count >= MIN_PLAYERS && count <= MAX_PLAYERS;
+  const canStart = count >= MIN_PLAYERS && count <= MAX_PLAYERS && dealerId !== null;
 
   async function handleStart() {
+    if (!dealerId) return;
     setError(null);
     setStarting(true);
     try {
-      await startGame(room, players, betUnit);
+      await startGame(room, players, betUnit, dealerId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "게임을 시작하지 못했습니다.");
       setStarting(false);
@@ -92,6 +94,30 @@ export default function Lobby({
 
       {isHost ? (
         <div className="space-y-4">
+          <div className="space-y-2">
+            <p className="text-base font-medium">딜러 선택</p>
+            <p className="text-xs text-neutral-500">
+              딜러는 매 구 선을 지정하고 승자를 정산해요. 방장 대신 진행을 맡아주는 역할이에요. 다음 판부터는 이긴
+              사람이 자동으로 딜러가 돼요.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {players.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setDealerId(p.id)}
+                  className={`rounded-lg border px-3 py-2.5 text-base transition ${
+                    dealerId === p.id
+                      ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30"
+                      : "border-neutral-200 dark:border-neutral-800"
+                  }`}
+                >
+                  {p.nickname}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <p className="text-base font-medium">학교(기본 배팅) 금액</p>
             <div className="grid grid-cols-2 gap-2">

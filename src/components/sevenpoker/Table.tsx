@@ -100,6 +100,7 @@ export default function Table({
                 {p.nickname}
                 {p.id === me.id && " (나)"}
               </span>
+              {p.id === room.dealer_id && <span className="text-xs text-amber-500">딜러</span>}
               {p.folded && <span className="text-xs text-neutral-400">다이</span>}
               {p.all_in && !p.folded && <span className="text-xs text-red-500">올인</span>}
               {p.round_contrib > 0 && (
@@ -134,8 +135,8 @@ function FirstActorPicker({
     }
   }
 
-  if (!me.is_host) {
-    return <p className="text-center text-base text-neutral-500">방장이 이번 구의 선을 정하는 중이에요...</p>;
+  if (me.id !== room.dealer_id) {
+    return <p className="text-center text-base text-neutral-500">딜러가 이번 구의 선을 정하는 중이에요...</p>;
   }
 
   return (
